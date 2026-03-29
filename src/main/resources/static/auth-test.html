@@ -1,10 +1,316 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auth Test Page</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    h1, h2, h3 { margin-top: 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+      font-family: Consolas, monospace;
+    }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      background: #111827;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      margin-top: 8px;
+    }
+    button.secondary {
+      background: #475569;
+    }
+    button.light {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 14px;
+      border-radius: 10px;
+      overflow: auto;
+      min-height: 140px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .hint {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 6px;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-$END$
+<div class="container">
+  <div class="card">
+    <h1>Auth Test Page</h1>
+    <p>Use this page to test register, login, JWT token storage, and protected API requests.</p>
+
+    <div class="form-group">
+      <label for="baseUrl">Backend Base URL</label>
+      <input id="baseUrl" type="text" value="http://localhost:8080" />
+      <div class="hint">Example: http://localhost:8080</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Register</h2>
+      <div class="form-group">
+        <label for="registerUsername">Username</label>
+        <input id="registerUsername" type="text" />
+      </div>
+      <div class="form-group">
+        <label for="registerPassword">Password</label>
+        <input id="registerPassword" type="password" />
+      </div>
+      <div class="form-group">
+        <label for="registerRealName">Real Name (Optional)</label>
+        <input id="registerRealName" type="text" />
+      </div>
+      <div class="form-group">
+        <label for="registerEmail">Email (Optional)</label>
+        <input id="registerEmail" type="text" />
+      </div>
+      <div class="form-group">
+        <label for="registerPhone">Phone (Optional)</label>
+        <input id="registerPhone" type="text" />
+      </div>
+      <div class="form-group">
+        <label for="registerUserNo">User No (Optional)</label>
+        <input id="registerUserNo" type="text" />
+      </div>
+      <button onclick="registerUser()">Register</button>
+
+      <h3>Register Response</h3>
+      <pre id="registerResult">No response yet</pre>
+    </div>
+
+    <div class="card">
+      <h2>Login</h2>
+      <div class="form-group">
+        <label for="loginUsername">Username</label>
+        <input id="loginUsername" type="text" />
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" />
+      </div>
+      <button onclick="loginUser()">Login</button>
+
+      <h3>Login Response</h3>
+      <pre id="loginResult">No response yet</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>JWT Token</h2>
+    <div class="form-group">
+      <label for="tokenBox">Token</label>
+      <textarea id="tokenBox" placeholder="Token will appear here after login, or you can paste one manually."></textarea>
+    </div>
+    <button class="secondary" onclick="saveToken()">Save Token</button>
+    <button class="secondary" onclick="loadToken()">Load Token</button>
+    <button class="light" onclick="clearToken()">Clear Token</button>
+    <button onclick="getMe()">Test /auth/me</button>
+
+    <h3>/auth/me Response</h3>
+    <pre id="meResult">No response yet</pre>
+  </div>
+
+  <div class="card">
+    <h2>How to Use</h2>
+    <ol>
+      <li>Put this file in <code>src/main/resources/static/auth-test.html</code></li>
+      <li>Start your Spring Boot project</li>
+      <li>Open <code>http://localhost:8080/auth-test.html</code></li>
+      <li>Test your register endpoint and login endpoint</li>
+      <li>After login, test <code>/auth/me</code> with the saved JWT</li>
+    </ol>
+    <p class="hint">If your backend endpoint is not <code>/auth/register</code> or <code>/auth/login</code>, modify the JavaScript URLs below.</p>
+  </div>
+</div>
+
+<script>
+  function getBaseUrl() {
+    return document.getElementById('baseUrl').value.trim();
+  }
+
+  function setText(id, value) {
+    document.getElementById(id).textContent = value;
+  }
+
+  function getJsonSafely(text) {
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return text;
+    }
+  }
+
+  async function registerUser() {
+    const baseUrl = getBaseUrl();
+
+    const username = document.getElementById('registerUsername').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const realName = document.getElementById('registerRealName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const phone = document.getElementById('registerPhone').value.trim();
+    const userNo = document.getElementById('registerUserNo').value.trim();
+
+    const body = {
+      username: username,
+      password: password
+    };
+
+    if (realName) {
+      body.realName = realName;
+    }
+    if (email) {
+      body.email = email;
+    }
+    if (phone) {
+      body.phone = phone;
+    }
+    if (userNo) {
+      body.userNo = userNo;
+    }
+
+    try {
+      const response = await fetch(baseUrl + '/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const text = await response.text();
+      const data = getJsonSafely(text);
+      setText('registerResult', typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+    } catch (error) {
+      setText('registerResult', 'Request failed: ' + error.message);
+    }
+  }
+
+  async function loginUser() {
+    const baseUrl = getBaseUrl();
+    const body = {
+      username: document.getElementById('loginUsername').value,
+      password: document.getElementById('loginPassword').value
+    };
+
+    try {
+      const response = await fetch(baseUrl + '/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const text = await response.text();
+      const data = getJsonSafely(text);
+      setText('loginResult', typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+
+      if (typeof data === 'object' && data !== null) {
+        const token = (data.data && data.data.token) || data.token || (data.data && data.data.accessToken) || '';
+        if (token) {
+          document.getElementById('tokenBox').value = token;
+          localStorage.setItem('auth_token', token);
+        }
+      }
+    } catch (error) {
+      setText('loginResult', 'Request failed: ' + error.message);
+    }
+  }
+
+  function saveToken() {
+    const token = document.getElementById('tokenBox').value;
+    localStorage.setItem('auth_token', token);
+    alert('Token saved.');
+  }
+
+  function loadToken() {
+    const token = localStorage.getItem('auth_token') || '';
+    document.getElementById('tokenBox').value = token;
+  }
+
+  function clearToken() {
+    localStorage.removeItem('auth_token');
+    document.getElementById('tokenBox').value = '';
+    setText('meResult', 'No response yet');
+  }
+
+  async function getMe() {
+    const baseUrl = getBaseUrl();
+    const token = document.getElementById('tokenBox').value || localStorage.getItem('auth_token') || '';
+
+    try {
+      const response = await fetch(baseUrl + '/auth/me', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      const text = await response.text();
+      const data = getJsonSafely(text);
+      setText('meResult', typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+    } catch (error) {
+      setText('meResult', 'Request failed: ' + error.message);
+    }
+  }
+</script>
 </body>
 </html>
