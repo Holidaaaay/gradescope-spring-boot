@@ -408,7 +408,72 @@ git revert HEAD
 
 ---
 
-## 推送 #5 —— {下次推送标题}
+## 推送 #5 —— 前端认证页 UI 重设计（frontend-design）
+
+- **日期**: 2026-06-25
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [前端里程碑 F1：前端项目搭建与认证页面](MILESTONES.md#前端里程碑-1f1前端项目搭建与认证页面)
+
+### 实现了什么
+- 安装并使用 Anthropic 官方 `frontend-design` plugin 生成认证页 redesign 设计规范。
+- 根据规范重构前端设计系统：
+  - 新色板：`--color-desk`（桌面灰）、`--color-paper`（纸张白）、`--color-ink`（墨色）、`--color-rule`（批改红）等。
+  - 新字体：`Source Serif 4` 用于标题，`Sora` 用于 UI 文本，通过 Google Fonts 加载。
+- 重构 `AuthLayout.vue`：
+  - 左侧 33% 深色品牌面板（石墨黑），右侧表单区居中卡片。
+  - 新增“Margin Rule（批改建）”标志性装饰：表单卡片左侧 2px 红色竖线 + 刻度标记。
+  - 响应式：桌面双栏、平板顶部横幅、移动端隐藏品牌区、卡片全宽。
+- 重构 `AuthLayout.vue` 左侧品牌面板：
+  - 去除冗长功能列表，只保留品牌 Logo、一行大标题、一道红色编辑标记、一行介绍语。
+  - 标题与介绍语已中文化。
+- 重构 `LoginView.vue` 与 `RegisterView.vue`：
+  - 全部文案中文化（标题、标签、占位符、按钮、页脚、验证提示）。
+  - 修复提交按钮不可见的问题：移除依赖 `opacity: 0` + `animation forwards` 的入场动效，确保按钮在任意动画偏好下都正常显示。
+  - 输入框聚焦红色光环、提交按钮悬停上浮、自定义视觉风格保留。
+- 在 `style.css` 中加入 `prefers-reduced-motion` 媒体查询，尊重用户减少动画偏好。
+
+### 实现细节
+- 设计规格直接来源于 `frontend-design` skill 输出：以“学术桌面 / 批改纸”为隐喻，避免常见 SaaS 默认色板。
+- 表单卡片由 `AuthLayout.vue` 统一提供，子页面只负责内容，减少重复样式。
+- Margin Rule 使用绝对定位 + `aria-hidden="true"`，仅作装饰，不影响无障碍。
+- 所有交互动画（入场、聚焦、悬停）均使用 CSS 变量和 `cubic-bezier(0.4, 0, 0.2, 1)`。
+
+### 新增 / 修改 / 删除的文件
+- **新增**: （无）
+- **修改**:
+  - `TECHNICAL_PLAN.md`（新增 9.4.3 前端设计系统规范：色板、字体、Margin Rule、动效、响应式、中文文案、无障碍）
+  - `gradescope-frontend/src/main.ts`（补充 `import './style.css'`，修复样式未加载导致页面白底黑字的问题）
+  - `gradescope-frontend/index.html`（加载 Google Fonts）
+  - `gradescope-frontend/src/style.css`（设计系统变量、动画、字体）
+  - `gradescope-frontend/src/layouts/AuthLayout.vue`（双栏布局 + 最小化品牌面板 + Margin Rule）
+  - `gradescope-frontend/src/views/auth/LoginView.vue`（中文化 + 修复按钮显示）
+  - `gradescope-frontend/src/views/auth/RegisterView.vue`（中文化 + 修复按钮显示）
+- **删除**: （无）
+
+### 执行的测试
+- `npm run build`：
+  - `vue-tsc -b` 通过，无 TypeScript 编译错误。
+  - `vite build` 成功生成 `dist/`。
+- 存在的两个警告为依赖库预置问题，非本次改动引入：
+  - `node_modules/@vueuse/core/dist/index.js` 的 `/* #__PURE__ */` 注释位置警告。
+  - 构建产物 `index.js` 大于 500 kB 的 chunk 大小提示（Element Plus 完整引入，后续 F6 按需加载优化）。
+
+### 已知问题 / 限制
+- 前端尚未连接真实后端进行端到端测试（需要后端服务运行在 `localhost:8080`）。
+- `useAuthStore` 当前仍将 JWT 持久化到 `localStorage`，与项目 Vue 安全规范中“禁止将原始 token 写入 localStorage”存在冲突；将在后续里程碑（RBAC/安全加固）中升级为 httpOnly Cookie 或安全存储方案。
+- `MILESTONES.md` F1 的部分手动验收项（如登录成功后 token 写入、跳转 `/dashboard`）需启动前后端后验证。
+- 构建产物体积较大，计划在 F6 通过路由懒加载 + `unplugin-vue-components` 优化。
+
+### 回滚指令
+若本次推送导致问题，可回滚最近一次提交：
+```bash
+git revert HEAD
+```
+
+---
+
+## 推送 #6 —— {下次推送标题}
 
 - **日期**: （待定）
 - **分支**: `main`
@@ -432,9 +497,6 @@ _（待完成时填写）_
 
 ### 回滚指令
 _（待完成时填写）_
-
-### 回滚指令
-_（里程碑 1 完成时填写）_
 
 ---
 

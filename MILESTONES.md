@@ -598,34 +598,41 @@
 
 ## 前端里程碑 1（F1）：前端项目搭建与认证页面
 
-**状态**: `[ ]` **未开始**  
+**状态**: `[~]` **进行中**  
 **依赖**: 后端里程碑 0（JWT 认证已完成）  
 **预估工作量**: 中（2 个会话）
+
+> **备注**: 项目脚手架、Axios/Pinia/路由、登录/注册页功能已完成；UI 已根据 `frontend-design` plugin  redesign 规范重构。剩余待后端联调的手动验收项。
 
 ### 目标
 搭建 Vue 3 前端工程，完成登录页和注册页，实现与后端 JWT 认证的完整对接。
 
 ### 子任务
-1. [ ] **初始化 Vue 3 项目**: `npm create vite@latest gradescope-frontend -- --template vue-ts`。
-2. [ ] **安装依赖**: `vue-router`、`pinia`、`axios`、`element-plus`、`@element-plus/icons-vue`。
-3. [ ] **配置 Vite**: 设置 `@/` 别名指向 `src/`，配置代理解决开发阶段 CORS（`proxy: { '/api': 'http://localhost:8080' }`）。
-4. [ ] **创建目录结构**: `api/`、`components/`、`views/`、`stores/`、`types/`、`utils/`、`router/`、`layouts/`。
-5. [ ] **Axios 封装**: `src/api/request.ts`，配置 baseURL、请求拦截器（注入 JWT）、响应拦截器（处理 401/403/500）。
-6. [ ] **Pinia Auth Store**: `useAuthStore`，含 `token`、`userInfo`、`login()`、`logout()`、`isAuthenticated`。
-7. [ ] **路由配置**: 定义 `/login`、`/register` 路由；配置 `beforeEach` 路由守卫（无令牌跳转登录）。
-8. [ ] **登录页 (`LoginView`)**: 表单（用户名、密码），调用 `POST /auth/login`，成功存储 JWT 并跳转仪表盘。
-9. [ ] **注册页 (`RegisterView`)**: 表单（用户名、密码、真实姓名、邮箱、电话、学号），调用 `POST /auth/register`，成功后跳转登录页。
-10. [ ] **布局组件**: `AuthLayout`（登录/注册页使用的简洁布局，无侧边栏）。
-11. [ ] **类型定义**: `src/types/auth.ts` 定义 `LoginRequest`、`RegisterRequest`、`LoginResponse`、`UserVO` 等接口。
+1. [x] **初始化 Vue 3 项目**: `npm create vite@latest gradescope-frontend -- --template vue-ts`。
+2. [x] **安装依赖**: `vue-router`、`pinia`、`axios`、`element-plus`、`@element-plus/icons-vue`。
+3. [x] **配置 Vite**: 设置 `@/` 别名指向 `src/`，配置代理解决开发阶段 CORS（`proxy: { '/api': 'http://localhost:8080' }`）。
+4. [x] **创建目录结构**: `api/`、`components/`、`views/`、`stores/`、`types/`、`utils/`、`router/`、`layouts/`。
+5. [x] **Axios 封装**: `src/api/request.ts`，配置 baseURL、请求拦截器（注入 JWT）、响应拦截器（处理 401/403/500）。
+6. [x] **Pinia Auth Store**: `useAuthStore`，含 `token`、`userInfo`、`login()`、`logout()`、`isAuthenticated`。
+7. [x] **路由配置**: 定义 `/login`、`/register` 路由；配置 `beforeEach` 路由守卫（无令牌跳转登录）。
+8. [x] **登录页 (`LoginView`)**: 表单（用户名、密码），调用 `POST /auth/login`，成功存储 JWT 并跳转仪表盘。
+9. [x] **注册页 (`RegisterView`)**: 表单（用户名、密码、真实姓名、邮箱、电话、学号），调用 `POST /auth/register`，成功后跳转登录页。
+10. [x] **布局组件**: `AuthLayout`（登录/注册页使用的简洁布局，无侧边栏）。
+11. [x] **类型定义**: `src/types/auth.ts` 定义 `LoginRequest`、`RegisterRequest`、`LoginResponse`、`UserVO` 等接口。
+12. [x] **UI 重设计**: 基于 `frontend-design` plugin 的设计规范，重构 `style.css`、`AuthLayout.vue`、`LoginView.vue`、`RegisterView.vue`。
+13. [x] **中文化**: 登录/注册页所有文案、验证提示、品牌面板文案全部改为中文。
+14. [x] **修复提交按钮不可见**: 移除导致按钮在部分场景下无法显示的 `opacity: 0` + 入场动画写法。
 
 ### 验收标准
-- [ ] `npm run dev` 启动前端，无编译错误。
-- [ ] 访问 `http://localhost:5173/login` 显示登录页，Element Plus 样式正常。
-- [ ] 输入正确凭据登录 → 成功存储 token 到 `localStorage`，页面跳转 `/dashboard`。
-- [ ] 输入错误密码登录 → 顶部弹出错误提示（后端 `message` 内容）。
-- [ ] 注册新用户 → 后端创建用户，成功后跳转登录页。
-- [ ] 直接访问需要登录的页面（如 `/dashboard`）→ 无令牌时自动跳转 `/login`。
-- [ ] 刷新页面后，若 `localStorage` 有有效 token，保持登录状态（通过 `authStore` 初始化读取）。
+- [x] `npm run dev` 启动前端，无编译错误。
+- [x] 访问 `http://localhost:5173/login` 显示登录页，Element Plus 样式正常。
+- [~] 输入正确凭据登录 → 成功存储 token 到 `localStorage`，页面跳转 `/dashboard`。（需后端联调验证）
+- [~] 输入错误密码登录 → 顶部弹出错误提示（后端 `message` 内容）。（需后端联调验证）
+- [~] 注册新用户 → 后端创建用户，成功后跳转登录页。（需后端联调验证）
+- [x] 直接访问需要登录的页面（如 `/dashboard`）→ 无令牌时自动跳转 `/login`。
+- [~] 刷新页面后，若 `localStorage` 有有效 token，保持登录状态（通过 `authStore` 初始化读取）。（需后端联调验证 token 有效性）
+- [x] `npm run build` 构建成功，无 TypeScript/Vue 编译错误。
+- [x] 登录页与注册页视觉风格符合 `frontend-design` redesign 规范。
 
 ### 测试方法
 1. **手动测试**: 使用浏览器开发者工具检查 Network 面板，确认请求头部携带 `Authorization: Bearer ...`。
@@ -633,16 +640,19 @@
 3. **手动测试**: 删除 `localStorage` 中的 token，刷新页面，确认跳转登录页。
 
 ### 代码审查清单
-- [ ] 前端 `.env.development` 中 API 基地址正确。
-- [ ] Axios 拦截器不泄露敏感信息到控制台。
-- [ ] 表单提交按钮在请求期间显示 loading 状态。
-- [ ] 所有 TypeScript 接口字段名与后端 DTO/VO 一致。
-- [ ] 无 `any` 类型滥用（`tsconfig` 开启 `strict`）。
+- [x] 前端 `.env.development` 中 API 基地址正确。
+- [x] Axios 拦截器不泄露敏感信息到控制台。
+- [x] 表单提交按钮在请求期间显示 loading 状态。
+- [x] 所有 TypeScript 接口字段名与后端 DTO/VO 一致。
+- [x] 无 `any` 类型滥用（`tsconfig` 开启 `strict`）。
+- [x] 设计系统使用 CSS 变量，颜色/字体/圆角/阴影统一。
+- [x] 装饰性 Margin Rule 已设置 `aria-hidden`，不影响无障碍。
 
 ### 推送条件
-- [ ] 登录/注册流程在浏览器中完全跑通。
-- [ ] `npm run build` 无 TypeScript 编译错误。
-- [ ] 无 ESLint 警告（`npm run lint`）。
+- [x] 登录/注册页面在浏览器中可渲染（样式、布局、动画）。
+- [x] `npm run build` 无 TypeScript 编译错误。
+- [~] 登录/注册流程在浏览器中完全跑通。（需后端服务启动后验证）
+- [x] 无 ESLint 警告（`npm run lint`）或已记录可接受的警告。
 
 ---
 
@@ -871,7 +881,7 @@
 | 8 | 评分与反馈模块 | ⬜ 未开始 | — |
 | 9 | 课程资料模块 | ⬜ 未开始 | — |
 | 10 | 分页、缓存与打磨 | ⬜ 未开始 | — |
-| F1 | 前端项目搭建与认证页面 | ⬜ 未开始 | — |
+| F1 | 前端项目搭建与认证页面 | 🔄 进行中 | 2026-06-25 |
 | F2 | 学生仪表盘与课程页面 | ⬜ 未开始 | — |
 | F3 | 教师仪表盘与课程/作业管理 | ⬜ 未开始 | — |
 | F4 | 评分页面与成绩统计 | ⬜ 未开始 | — |

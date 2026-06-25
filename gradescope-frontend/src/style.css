@@ -2,54 +2,47 @@
    Gradescope Design System — Global Styles
    ============================================================ */
 
+/* Google Fonts — Source Serif 4 (display) + Sora (UI) */
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&family=Sora:wght@300..700&display=swap');
+
 /* CSS Variables */
 :root {
-  /* Primary Palette — Indigo */
-  --color-primary-50:  #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-200: #c7d2fe;
-  --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
+  /* Editorial Palette */
+  --color-desk: #e8e8e6;
+  --color-paper: #fdfdfb;
+  --color-ink: #1c1c1c;
+  --color-graphite: #6b6b6b;
+  --color-rule: #b8323e;
+  --color-rule-dark: #922a33;
+  --color-archive: #d4a843;
+  --color-panel: #2d2d2d;
+  --color-panel-ink: #f4f4f2;
+  --color-panel-muted: #a0a0a0;
+  --color-border: #e0e0de;
+  --color-border-focus: #b8323e;
 
-  /* Neutral Palette — Slate */
-  --color-slate-50:  #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-200: #e2e8f0;
-  --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
-
-  /* Semantic Colors */
-  --color-bg:           #ffffff;
-  --color-bg-soft:      #f8fafc;
-  --color-bg-muted:     #f1f5f9;
-  --color-text:         #0f172a;
-  --color-text-soft:    #475569;
-  --color-text-muted:   #94a3b8;
-  --color-border:       #e2e8f0;
-  --color-border-hover: #cbd5e1;
+  /* Semantic aliases used by components */
+  --color-bg: var(--color-paper);
+  --color-bg-soft: var(--color-desk);
+  --color-bg-muted: #f2f2f0;
+  --color-text: var(--color-ink);
+  --color-text-soft: var(--color-graphite);
+  --color-text-muted: #9ca3af;
+  --color-primary: var(--color-rule);
+  --color-primary-dark: var(--color-rule-dark);
 
   /* Shadows */
-  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.04);
-  --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
-  --shadow-xl:  0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 2px rgba(28, 28, 28, 0.04);
+  --shadow-md: 0 4px 12px rgba(28, 28, 28, 0.06);
+  --shadow-lg: 0 12px 28px rgba(28, 28, 28, 0.08);
   --shadow-card: 0 0 0 1px var(--color-border), var(--shadow-lg);
+  --shadow-button: 0 4px 12px rgba(184, 50, 62, 0.28);
 
   /* Radius */
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  16px;
-  --radius-xl:  24px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
   /* Spacing */
@@ -67,14 +60,15 @@
   --space-24: 96px;
 
   /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Source Serif 4', Georgia, 'Noto Serif SC', serif;
+  --font-sans: 'Sora', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
   /* Transitions */
-  --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow:   350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ============================================================
@@ -111,41 +105,72 @@ body {
    Animations
    ============================================================ */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInScale {
   from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes slideInRight {
-  from { opacity: 0; transform: translateX(24px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-18px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .animate-fade-in {
   animation: fadeIn 0.5s var(--transition-normal) forwards;
 }
 
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s var(--transition-normal) forwards;
+}
+
 .animate-fade-in-scale {
-  animation: fadeInScale 0.4s var(--transition-normal) forwards;
+  animation: fadeInScale 0.45s var(--transition-normal) forwards;
 }
 
 .animate-slide-in-right {
-  animation: slideInRight 0.5s var(--transition-normal) forwards;
+  animation: slideInRight 0.45s var(--transition-normal) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.45s var(--transition-normal) forwards;
 }
 
 /* Stagger children */
 .stagger-children > * {
   opacity: 0;
-  animation: fadeIn 0.4s var(--transition-normal) forwards;
+  animation: fadeInUp 0.45s var(--transition-normal) forwards;
 }
 
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 70ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 140ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 210ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 280ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 350ms; }
+
+/* ============================================================
+   Reduced Motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

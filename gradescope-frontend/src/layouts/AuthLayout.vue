@@ -1,55 +1,39 @@
 <template>
   <div class="auth-layout">
-    <!-- Left Panel: Brand & Illustration -->
+    <!-- 左侧品牌面板 -->
     <aside class="brand-panel">
       <div class="brand-content">
-        <div class="brand-logo">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="40" height="40" rx="10" fill="white" fill-opacity="0.12" />
+        <div class="brand-logo animate-fade-in-up">
+          <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="10" fill="white" fill-opacity="0.1" />
             <path d="M12 14H28M12 20H24M12 26H20" stroke="white" stroke-width="2.5" stroke-linecap="round" />
           </svg>
           <span class="logo-text">Gradescope</span>
         </div>
 
-        <h1 class="brand-headline">
-          Streamline your
-          <br />
-          <span class="brand-highlight">teaching workflow</span>
-        </h1>
-
-        <p class="brand-desc">
-          Assign, submit, grade, and collaborate — all in one modern platform built for educators and students.
-        </p>
-
-        <ul class="feature-list stagger-children">
-          <li class="feature-item">
-            <span class="feature-icon">✓</span>
-            <span class="feature-text">Intelligent assignment management</span>
-          </li>
-          <li class="feature-item">
-            <span class="feature-icon">✓</span>
-            <span class="feature-text">Multi-version submission tracking</span>
-          </li>
-          <li class="feature-item">
-            <span class="feature-icon">✓</span>
-            <span class="feature-text">Transparent rubric-based grading</span>
-          </li>
-          <li class="feature-item">
-            <span class="feature-icon">✓</span>
-            <span class="feature-text">Role-based access control</span>
-          </li>
-        </ul>
-
-        <!-- Decorative circles -->
-        <div class="decor-circle decor-circle-1" />
-        <div class="decor-circle decor-circle-2" />
-        <div class="decor-circle decor-circle-3" />
+        <div class="brand-statement animate-fade-in-up">
+          <h1 class="brand-headline">
+            更清晰的评分方式。
+          </h1>
+          <div class="editorial-mark" aria-hidden="true" />
+          <p class="brand-tagline">
+            作业、提交与成绩，一站式管理。
+          </p>
+        </div>
       </div>
     </aside>
 
-    <!-- Right Panel: Form -->
+    <!-- 右侧表单面板 -->
     <main class="form-panel">
-      <div class="form-wrapper animate-fade-in-scale">
+      <div class="form-card animate-fade-in-scale">
+        <!-- 标志性批改建 -->
+        <div class="margin-rule" aria-hidden="true">
+          <div class="rule-line" />
+          <div class="rule-tick tick-top" />
+          <div class="rule-tick tick-middle" />
+          <div class="rule-tick tick-bottom" />
+        </div>
+
         <router-view />
       </div>
     </main>
@@ -60,26 +44,36 @@
 .auth-layout {
   display: flex;
   min-height: 100vh;
-  background: var(--color-bg);
+  background: var(--color-desk);
 }
 
-/* ── Left Brand Panel ─────────────────────────────── */
+/* ── 左侧品牌面板 ─────────────────────────────── */
 .brand-panel {
-  flex: 0 0 44%;
+  flex: 0 0 33%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: var(--space-16);
-  background: linear-gradient(160deg, #3730a3 0%, #4f46e5 50%, #6366f1 100%);
-  color: white;
+  padding: var(--space-12) var(--space-10);
+  background: var(--color-panel);
+  color: var(--color-panel-ink);
   position: relative;
   overflow: hidden;
+}
+
+.brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 120% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at -20% 110%, rgba(255, 255, 255, 0.05) 0%, transparent 35%);
+  pointer-events: none;
 }
 
 .brand-content {
   position: relative;
   z-index: 1;
-  max-width: 440px;
+  max-width: 360px;
   margin: 0 auto;
 }
 
@@ -87,136 +81,233 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin-bottom: var(--space-10);
+  margin-bottom: var(--space-12);
 }
 
 .logo-text {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: white;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-panel-ink);
+}
+
+.brand-statement {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .brand-headline {
-  font-size: 2.75rem;
-  font-weight: 800;
-  line-height: 1.1;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 1.05;
   letter-spacing: -0.03em;
-  color: white;
+  color: var(--color-panel-ink);
+  margin: 0 0 var(--space-5) 0;
+}
+
+.editorial-mark {
+  width: 40px;
+  height: 3px;
+  background: var(--color-rule);
+  border-radius: var(--radius-full);
   margin-bottom: var(--space-5);
 }
 
-.brand-highlight {
-  background: linear-gradient(90deg, #c7d2fe, #a5b4fc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.brand-desc {
-  font-size: 1.0625rem;
-  line-height: 1.65;
-  color: rgba(255, 255, 255, 0.75);
-  margin-bottom: var(--space-10);
-  max-width: 360px;
-}
-
-.feature-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+.brand-tagline {
+  font-family: var(--font-sans);
   font-size: 0.9375rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-panel-muted);
+  margin: 0;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.feature-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.15);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: white;
-  flex-shrink: 0;
-}
-
-/* Decorative circles */
-.decor-circle {
-  position: absolute;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.04);
-  pointer-events: none;
-}
-
-.decor-circle-1 {
-  width: 400px;
-  height: 400px;
-  top: -120px;
-  right: -100px;
-}
-
-.decor-circle-2 {
-  width: 280px;
-  height: 280px;
-  bottom: 80px;
-  right: -60px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.decor-circle-3 {
-  width: 160px;
-  height: 160px;
-  bottom: -40px;
-  left: 40px;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* ── Right Form Panel ─────────────────────────────── */
+/* ── 右侧表单面板与卡片 ───────────────────────── */
 .form-panel {
   flex: 1 1 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-8);
-  background: var(--color-bg-soft);
 }
 
-.form-wrapper {
+.form-card {
+  position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
+  background: var(--color-paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-10) var(--space-8) var(--space-8) 56px;
+  overflow: hidden;
 }
 
-/* ── Responsive ───────────────────────────────────── */
-@media (max-width: 960px) {
+/* ── 批改建 ──────────────────────────────────── */
+.margin-rule {
+  position: absolute;
+  top: var(--space-10);
+  bottom: var(--space-8);
+  left: 28px;
+  width: 2px;
+  pointer-events: none;
+}
+
+.rule-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: var(--color-rule);
+  border-radius: var(--radius-full);
+  opacity: 0.9;
+}
+
+.rule-tick {
+  position: absolute;
+  left: 50%;
+  width: 14px;
+  height: 2px;
+  background: var(--color-rule);
+  border-radius: var(--radius-full);
+  transform: translateX(-50%);
+  transition: width 0.2s ease, transform 0.2s ease;
+}
+
+.tick-top { top: 0; }
+.tick-middle {
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+}
+.tick-bottom { bottom: 0; }
+
+.form-card:hover .rule-tick {
+  width: 18px;
+}
+
+/* ── 响应式 ──────────────────────────────────── */
+@media (max-width: 1023px) {
+  .auth-layout {
+    flex-direction: column;
+  }
+
+  .brand-panel {
+    flex: 0 0 auto;
+    padding: var(--space-6) var(--space-8);
+    align-items: center;
+    text-align: center;
+  }
+
+  .brand-content {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .brand-logo {
+    margin-bottom: var(--space-4);
+  }
+
+  .brand-statement {
+    align-items: center;
+  }
+
+  .brand-headline {
+    font-size: 2rem;
+    margin-bottom: var(--space-4);
+  }
+
+  .editorial-mark {
+    margin-bottom: var(--space-4);
+  }
+
+  .brand-tagline {
+    max-width: 420px;
+  }
+
+  .form-panel {
+    padding: var(--space-6);
+    align-items: flex-start;
+  }
+
+  .form-card {
+    padding: var(--space-8) var(--space-6) var(--space-6) 48px;
+  }
+
+  .margin-rule {
+    left: 24px;
+    top: var(--space-8);
+    bottom: var(--space-6);
+  }
+}
+
+@media (max-width: 767px) {
+  .brand-panel {
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .brand-headline,
+  .editorial-mark,
+  .brand-tagline {
+    display: none;
+  }
+
+  .form-panel {
+    padding: var(--space-4);
+  }
+
+  .form-card {
+    max-width: 100%;
+    padding: var(--space-8) var(--space-5) var(--space-6) 40px;
+    border-radius: var(--radius-md);
+  }
+
+  .margin-rule {
+    left: 20px;
+    width: 1px;
+  }
+
+  .rule-tick {
+    width: 10px;
+    height: 1px;
+  }
+
+  .tick-middle {
+    display: none;
+  }
+}
+
+@media (max-width: 479px) {
   .brand-panel {
     display: none;
   }
 
   .form-panel {
-    padding: var(--space-6);
-  }
-}
-
-@media (max-width: 480px) {
-  .form-panel {
+    min-height: 100vh;
     padding: var(--space-4);
-    align-items: flex-start;
-    padding-top: var(--space-10);
+    align-items: center;
   }
 
-  .form-wrapper {
-    max-width: 100%;
+  .form-card {
+    padding: var(--space-8) var(--space-4) var(--space-6) 32px;
+  }
+
+  .margin-rule {
+    left: 14px;
+  }
+
+  .rule-tick {
+    width: 8px;
+  }
+
+  .tick-bottom {
+    display: none;
   }
 }
 </style>
