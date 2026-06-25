@@ -1,0 +1,310 @@
+# 变更日志 / 推送记录
+
+> **状态**: 动态文档 | **最后更新**: 2026-06-25  
+> **用途**: 按时间顺序记录每次推送到远程仓库的操作。每条记录 documenting 实现了什么、如何实现的、关键设计决策，以及任何已知问题或回滚指令。用于追踪进度、调试回归问题、理解历史上下文。
+
+---
+
+## 记录格式
+
+每次推送记录**必须**遵循以下结构：
+
+```markdown
+## 推送 #{编号} —— {简短标题}
+
+- **日期**: YYYY-MM-DD
+- **分支**: {分支名}
+- **提交范围**: `{起始哈希}..{结束哈希}`（若含多个提交）
+- **里程碑**: 关联 `MILESTONES.md` 中的里程碑
+
+### 实现了什么
+{功能、修复或重构的列表}
+
+### 实现细节
+{构建方式、关键类/文件变更、架构决策}
+
+### 新增 / 修改 / 删除的文件
+- **新增**: `path/to/new/file.java`
+- **修改**: `path/to/changed/file.java`
+- **删除**: `path/to/removed/file.java`
+
+### 执行的测试
+{运行了哪些测试，手动或自动，及其结果}
+
+### 已知问题 / 限制
+{任何未完成项、代码中留下的 TODO、或未处理的边界情况}
+
+### 回滚指令
+{若发现严重缺陷，如何回滚本次推送}
+```
+
+---
+
+## 推送 #0 —— 初始项目搭建与 JWT 认证
+
+- **日期**: 2026-03-27
+- **分支**: `main`
+- **提交范围**: `1e71163..ba41ae1`
+- **里程碑**: [里程碑 0：项目基础与 JWT 认证](MILESTONES.md#里程碑-0项目基础与-jwt-认证)
+
+### 实现了什么
+- 使用 Maven 构建系统创建 Spring Boot 3.3.5 项目。
+- 在 `application.properties` 中配置 MySQL 8 连接（`gradescope_db`）。
+- 配置 MyBatis XML Mapper 支持（`map-underscore-to-camel-case=true`）。
+- 创建统一响应包装器 `Result<T>`，位于 `common.result` 包。
+- 实现 `User` 实体，映射 `users` 表（16 个字段，支持逻辑删除）。
+- 实现 `UserMapper` 接口 + `UserMapper.xml`，含 `selectById`、`selectByUsername`、`insert`。
+- 实现 `UserService` / `UserServiceImpl`，含 `getById`、`getByUsername`、`save`。
+- 实现 `UserController`，含 `GET /users/{id}`，返回 `UserVO`（敏感字段已隐藏）。
+- 修复 `@MapperScan` 范围问题：仅扫描 `mapper` 包，防止 Spring 误将 Service 识别为 Mapper。
+- 集成 Spring Security，自定义 `SecurityConfig`：
+  - 关闭 CSRF（无状态 REST API）。
+  - 会话创建策略设为 `STATELESS`。
+  - 配置公开端点：`/auth/register`、`/auth/login`、`/auth/me`、`/auth-test.html`。
+  - 其余端点需认证。
+- 实现 JWT 认证流程：
+  - `JwtTokenProvider`：HS256 令牌生成、解析、校验，支持配置密钥和有效期。
+  - `JwtAuthenticationFilter`：从 `Authorization` 头部提取 `Bearer` 令牌，校验 JWT，填充 `SecurityContextHolder`。
+  - `LoginUser`：自定义 `UserDetails` 实现，包装 `User` 实体。
+  - `CustomUserDetailsService`：从数据库按用户名加载用户。
+- 在 `AuthController` 中实现认证端点：
+  - `POST /auth/register`：校验输入，BCrypt 哈希密码，创建用户，返回 `RegisterResponseVO`。
+  - `POST /auth/login`：校验凭据，检查用户状态（`status=1`、`isDeleted=0`），生成 JWT，返回 `LoginResponseVO`。
+  - `GET /auth/me`：从 `Authentication` 主体提取当前用户，返回用户 ID 和用户名。
+- 添加 `PasswordConfig`，将 `BCryptPasswordEncoder` 暴露为 Spring Bean。
+- 创建 DTO：`RegisterRequestDTO`、`LoginRequestDTO`。
+- 创建 VO：`RegisterResponseVO`、`LoginResponseVO`、`UserVO`。
+- 添加静态测试页面 `auth-test.html`，用于手动端到端 JWT 流程验证。
+- 创建基线测试：`UserMapperTest`（MyBatis 集成）、`GradescopeSpringBootApplicationTests`（上下文加载）。
+
+### 实现细节
+- **密码哈希**: BCrypt 默认强度（10）。`PasswordConfig` 将编码器 Bean 隔离，避免与安全自动配置产生循环依赖。
+- **JWT 声明结构**:
+  - `subject`: 用户名
+  - `claim("userId")`: 用户主键
+  - `claim("username")`: 用户名（冗余但便于过滤器解析）
+  - `iat`、`exp`: 标准 JWT 时间戳
+- **安全过滤器链顺序**:
+  1. `JwtAuthenticationFilter`（在 `UsernamePasswordAuthenticationFilter` 之前添加）
+  2. 若令牌有效 → `SecurityContextHolder` 填充 `UsernamePasswordAuthenticationToken`
+  3. 若无令牌或无效 → 链继续；授权规则决定访问权限
+- **Bean 注入风格**: 全项目优先使用构造器注入（`UserServiceImpl`、`AuthServiceImpl`、`UserController`、`AuthController`、`JwtAuthenticationFilter`、`SecurityConfig`、`CustomUserDetailsService`）。
+- **VO/Entity 分离**: `UserVO` 故意省略 `passwordHash`、`lastLoginAt`、`createdAt`、`updatedAt`、`isDeleted`。转换使用 `BeanUtils.copyProperties`，作为引入 MapStruct 前的轻量过渡方案。
+- **MyBatis 配置**: XML Mapper 位于 `classpath:mapper/*.xml`。接口使用 `@Mapper` 注解；主类不使用 `@MapperScan` 以避免之前的范围问题。
+
+### 新增 / 修改 / 删除的文件
+- **新增**:
+  - `src/main/java/com/example/gradescopespringboot/GradescopeSpringBootApplication.java`
+  - `src/main/java/com/example/gradescopespringboot/entity/User.java`
+  - `src/main/java/com/example/gradescopespringboot/mapper/UserMapper.java`
+  - `src/main/resources/mapper/UserMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/service/UserService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/UserServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/UserController.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/AuthController.java`
+  - `src/main/java/com/example/gradescopespringboot/service/AuthService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/AuthServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/common/result/Result.java`
+  - `src/main/java/com/example/gradescopespringboot/dto/auth/RegisterRequestDTO.java`
+  - `src/main/java/com/example/gradescopespringboot/dto/auth/LoginRequestDTO.java`
+  - `src/main/java/com/example/gradescopespringboot/vo/auth/RegisterResponseVO.java`
+  - `src/main/java/com/example/gradescopespringboot/vo/auth/LoginResponseVO.java`
+  - `src/main/java/com/example/gradescopespringboot/vo/user/UserVO.java`
+  - `src/main/java/com/example/gradescopespringboot/config/PasswordConfig.java`
+  - `src/main/java/com/example/gradescopespringboot/config/SecurityConfig.java`
+  - `src/main/java/com/example/gradescopespringboot/security/util/JwtTokenProvider.java`
+  - `src/main/java/com/example/gradescopespringboot/security/filter/JwtAuthenticationFilter.java`
+  - `src/main/java/com/example/gradescopespringboot/security/model/LoginUser.java`
+  - `src/main/java/com/example/gradescopespringboot/security/service/CustomUserDetailsService.java`
+  - `src/main/resources/static/auth-test.html`
+  - `src/test/java/com/example/gradescopespringboot/UserMapperTest.java`
+  - `src/test/java/com/example/gradescopespringboot/GradescopeSpringBootApplicationTests.java`
+  - `pom.xml`
+  - `src/main/resources/application.properties`
+- **修改**: （初始提交，无先前文件修改）
+- **删除**: （无）
+
+### 执行的测试
+- **自动化**:
+  - `mvn clean test`：`UserMapperTest.testSelectById()` 通过；上下文加载测试通过。
+- **手动**:
+  - 通过 IDE 启动应用；确认启动无异常。
+  - 在浏览器中使用 `auth-test.html`：
+    1. 注册新用户 → 收到 `{"code":200,"message":"success","data":{"userId":X,"username":"testuser"}}`。
+    2. 使用相同凭据登录 → 收到 JWT 令牌。
+    3. 携带 Bearer 令牌调用 `GET /auth/me` → 收到用户信息。
+    4. 携带令牌调用 `GET /users/1` → 收到用户详情。
+    5. 不带令牌调用 `GET /users/1` → 收到 401。
+
+### 已知问题 / 限制
+- `UserMapper.xml` 查询**目前未过滤** `is_deleted = 0`。已删除用户仍可通过 ID 或用户名查询到。**将在里程碑 1 中修复**。
+- `AuthServiceImpl` 对业务错误（如"用户名已存在"）抛出原始 `RuntimeException`。这会作为 500 错误并泄露堆栈跟踪。**将在里程碑 1 中**通过 `@ControllerAdvice` 修复。
+- DTO（`RegisterRequestDTO`、`LoginRequestDTO`）无校验注解。可提交空字符串。**将在里程碑 1 中修复**。
+- `UserController.getById` 未处理 `null` 用户（返回空 VO 或在 `BeanUtils.copyProperties` 时引发 NPE）。应返回 404。**将在里程碑 1 中修复**。
+- `LoginUser.getAuthorities()` 中角色硬编码为 `ROLE_USER`。`roles` 和 `user_roles` 表存在但未使用。**将在里程碑 2 中处理**。
+- 所有列表接口暂不分页（目前不需要，但里程碑 10 中将需要）。
+- 尚无文件上传功能。
+- `auth-test.html` 是便利工具，非生产前端。
+
+### 回滚指令
+若本次推送导致严重问题，可回退到提交 `1e71163`（初始提交）：
+```bash
+git reset --hard 1e71163
+git push --force origin main  # 警告：破坏性操作；仅在绝对必要时使用
+```
+
+---
+
+## 推送 #1 —— 技术计划、里程碑与日志文档
+
+- **日期**: 2026-06-25
+- **分支**: `main`
+- **提交范围**: （待提交并推送）
+- **里程碑**: 不适用（元/项目管理）
+
+### 实现了什么
+- 创建 `TECHNICAL_PLAN.md`：全面的唯一权威来源，记录项目愿景、已锁定技术栈（后端 + 前端）、未来技术补充、系统架构（含前端层）、按模块划分的功能需求（含完整前端页面清单）、数据库设计原理、API 规范（含前后端交互与 CORS）、安全策略（含前端安全）、代码约定（含前端代码规范）、测试策略（含前端测试）和演进路线图（含前端阶段）。
+- 创建 `MILESTONES.md`：详细的 11 个后端里程碑 + 6 个前端里程碑任务拆解（M0/F0 已完成，M1-M10 / F1-F6 已规划）。每个里程碑包含子任务、验收标准、测试方法、代码审查清单和推送条件。
+- 创建 `CHANGELOG.md`：本文档，建立推送记录格式并记录基线推送 #0。
+- 创建 `PROJECT_OVERVIEW.md`：高层次项目介绍，用于入门和外部参考。
+- **本次更新（文档修订）**: 在 `TECHNICAL_PLAN.md` 和 `MILESTONES.md` 中补充了完整的前端规划：
+  - 前端技术栈：Vue 3 + Vite + TypeScript + Element Plus + Vue Router + Pinia + Axios。
+  - 前端页面清单：按角色（学生/教师/管理员）划分的完整页面列表，含路由、功能说明。
+  - 前端架构：SPA 单页应用、Pinia 状态管理、Axios 统一封装、路由守卫、动态菜单。
+  - 前端里程碑 F1-F6：从项目搭建 → 学生页面 → 教师页面 → 评分统计 → 管理员后台 → 部署优化。
+
+### 实现细节
+- 所有文档均为 Markdown 格式，存放于仓库根目录便于访问。
+- `TECHNICAL_PLAN.md` 设计为**动态文档**，包含显式变更日志章节（第 12 节）以追踪自身演进。
+- `MILESTONES.md` 使用严格的 `[ ]` / `[~]` / `[x]` 状态系统，防止完成状态歧义。
+- 里程碑依赖关系显式声明（例如里程碑 2 依赖里程碑 1），以强制线性、可验证的进度。
+- `MILESTONES.md` 中的推送条件要求 `mvn clean test` 通过**且**手动安全验证通过后才可推送到远程。
+
+### 新增 / 修改 / 删除的文件
+- **新增**:
+  - `TECHNICAL_PLAN.md`
+  - `MILESTONES.md`
+  - `CHANGELOG.md`
+  - `PROJECT_OVERVIEW.md`
+- **修改**: （无）
+- **删除**: （无）
+
+### 执行的测试
+- 不适用（仅文档，无代码变更）。
+
+### 已知问题 / 限制
+- 这些文档代表**计划状态**。实际实现可能需要偏差。任何偏差必须同时记录在 `CHANGELOG.md`（推送记录）和 `TECHNICAL_PLAN.md`（第 12 节文档变更日志）中。
+- 里程碑工作量估算是基于当前代码库复杂度的粗略猜测。完成里程碑 1 后应重新校准。
+
+### 回滚指令
+- 文档仅为追加。如需回滚，直接从工作区删除 `.md` 文件并提交即可。
+
+---
+
+## 推送 #2 —— 全局异常处理与输入校验
+
+- **日期**: 2026-06-25
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [里程碑 1：全局异常处理与输入校验](MILESTONES.md#里程碑-1全局异常处理与输入校验)
+
+### 实现了什么
+- 创建自定义异常体系：
+  - `BusinessException`（业务异常基类，支持 code + message）
+  - `ResourceNotFoundException`（404，资源不存在）
+  - `ValidationException`（400，参数校验失败）
+  - `UnauthorizedException`（401，未认证）
+- 创建 `ResultCode` 枚举，集中定义所有业务状态码（200/400/401/403/404/409/500）。
+- 创建 `GlobalExceptionHandler`（`@ControllerAdvice`），统一捕获所有异常并封装为 `Result<T>`：
+  - `BusinessException` → 返回结构化错误（code + message）
+  - `MethodArgumentNotValidException` → 返回 400 及字段错误信息
+  - `BindException` / `IllegalArgumentException` → 返回 400
+  - 通用 `Exception` → 返回 500，**服务端记录堆栈，客户端不泄露**
+- 为 DTO 添加 Jakarta Validation 注解：
+  - `RegisterRequestDTO`：`@NotBlank`、`@Size(min=3, max=50)`（username）、`@Size(min=8)`（password）、`@Email`
+  - `LoginRequestDTO`：`@NotBlank`（username、password）
+- 在 `AuthController` 的所有 `@RequestBody` 参数上添加 `@Valid`。
+- 更新 `UserMapper.xml`：`selectById` 和 `selectByUsername` 均加入 `AND is_deleted = 0`，已删除用户不再被查询到。
+- 重构 `AuthServiceImpl`：所有业务错误抛出 `BusinessException`（带 `ResultCode`），替代原始 `RuntimeException`。
+- 重构 `UserController.getById`：当用户不存在时抛出 `ResourceNotFoundException`，返回 404 而非空对象或 NPE。
+- 在 `pom.xml` 中添加 `spring-security-test` 依赖（测试作用域）。
+- 创建 `GlobalExceptionHandlerTest`：5 个单元测试，直接验证异常处理器的返回值结构，全部通过。
+
+### 实现细节
+- `GlobalExceptionHandler` 使用 `@Slf4j` 记录日志：业务异常记 WARN，未预期异常记 ERROR（含完整堆栈）。
+- 异常处理器返回的 HTTP 状态码始终是 200（保持 `Result<T>` 包装一致），业务状态码通过 `Result.code` 区分。
+- `AuthServiceImpl` 中用户名/密码为空的检查仍保留，作为双重保险（前端校验 + 后端校验）。
+- `UserMapper.xml` 中 `is_deleted = 0` 的检查直接追加在 WHERE 条件中，不影响现有查询语义。
+
+### 新增 / 修改 / 删除的文件
+- **新增**:
+  - `src/main/java/com/example/gradescopespringboot/common/exception/BusinessException.java`
+  - `src/main/java/com/example/gradescopespringboot/common/exception/ResourceNotFoundException.java`
+  - `src/main/java/com/example/gradescopespringboot/common/exception/ValidationException.java`
+  - `src/main/java/com/example/gradescopespringboot/common/exception/UnauthorizedException.java`
+  - `src/main/java/com/example/gradescopespringboot/common/exception/ResultCode.java`
+  - `src/main/java/com/example/gradescopespringboot/common/exception/GlobalExceptionHandler.java`
+  - `src/test/java/com/example/gradescopespringboot/GlobalExceptionHandlerTest.java`
+- **修改**:
+  - `src/main/java/com/example/gradescopespringboot/dto/auth/RegisterRequestDTO.java`（添加校验注解）
+  - `src/main/java/com/example/gradescopespringboot/dto/auth/LoginRequestDTO.java`（添加校验注解）
+  - `src/main/java/com/example/gradescopespringboot/controller/AuthController.java`（添加 `@Valid`）
+  - `src/main/java/com/example/gradescopespringboot/controller/UserController.java`（null 检查 + ResourceNotFoundException）
+  - `src/main/java/com/example/gradescopespringboot/service/impl/AuthServiceImpl.java`（替换 RuntimeException 为 BusinessException）
+  - `src/main/resources/mapper/UserMapper.xml`（添加 `is_deleted = 0`）
+  - `pom.xml`（添加 `spring-security-test`）
+  - `.gitignore`（添加 `.claude/`）
+- **删除**: （无）
+
+### 执行的测试
+- `GlobalExceptionHandlerTest`：5 个单元测试全部通过
+  - `testHandleBusinessException_ReturnsStructuredResult`
+  - `testHandleMethodArgumentNotValid_Returns400WithFieldErrors`
+  - `testHandleIllegalArgument_Returns400`
+  - `testHandleException_Returns500WithoutSensitiveInfo`
+  - `testHandleException_WithNullMessage_Returns500`
+- `GradescopeSpringBootApplicationTests`：上下文加载测试通过
+- **说明**: `UserMapperTest` 需要本地 MySQL 运行，当前环境未启动数据库，故未执行。
+
+### 已知问题 / 限制
+- `UserMapperTest` 因本地 MySQL 未运行而无法执行。建议在本地启动 MySQL 后补充运行 `mvn clean test` 以验证完整测试套件。
+- 当前未引入 `@NotBlank` 对全角空格的处理（`@NotBlank` 已覆盖空格，但全角空格需额外自定义校验器，可在后续里程碑补充）。
+
+### 回滚指令
+```bash
+git revert HEAD
+```
+
+---
+
+## 推送 #3 —— {下次推送标题}
+
+- **日期**: （待定）
+- **分支**: `main`
+- **提交范围**: （待定）
+- **里程碑**: [里程碑 2：RBAC（基于角色的访问控制）](MILESTONES.md#里程碑-2rbac基于角色的访问控制) 或 [前端里程碑 F1：前端项目搭建与认证页面](MILESTONES.md#前端里程碑-1f1前端项目搭建与认证页面)
+
+### 实现了什么
+_（待完成时填写）_
+
+### 实现细节
+_（待完成时填写）_
+
+### 新增 / 修改 / 删除的文件
+_（待完成时填写）_
+
+### 执行的测试
+_（待完成时填写）_
+
+### 已知问题 / 限制
+_（待完成时填写）_
+
+### 回滚指令
+_（待完成时填写）_
+
+### 回滚指令
+_（里程碑 1 完成时填写）_
+
+---
+
+> **如何更新本文档**: 每次推送到远程仓库后，在日志顶部（本行下方）按既定格式追加新记录。更新页眉中的"最后更新"日期。关联 `MILESTONES.md` 中的相关里程碑并更新其状态。

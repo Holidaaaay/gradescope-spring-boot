@@ -1,6 +1,7 @@
 package com.example.gradescopespringboot.service.impl;
 
-import com.example.gradescopespringboot.controller.AuthController;
+import com.example.gradescopespringboot.common.exception.BusinessException;
+import com.example.gradescopespringboot.common.exception.ResultCode;
 import com.example.gradescopespringboot.dto.auth.LoginRequestDTO;
 import com.example.gradescopespringboot.dto.auth.RegisterRequestDTO;
 import com.example.gradescopespringboot.entity.User;
@@ -32,23 +33,25 @@ public class AuthServiceImpl implements AuthService {
         String password = registerRequestDTO.getPassword();
 
         if (username == null || username.trim().isEmpty()) {
-            throw new RuntimeException("Username cannot be empty");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "Username cannot be empty");
         }
 
         if (password == null || password.trim().isEmpty()) {
-            throw new RuntimeException("Password cannot be empty");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "Password cannot be empty");
         }
 
         User existingUser = userService.getByUsername(username);
         if (existingUser != null) {
-            throw new RuntimeException("Username already exists");
+            throw new BusinessException(ResultCode.CONFLICT, "Username already exists");
         }
 
         User user = new User();
         user.setUsername(username.trim());
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setRealName(username.trim());
-        user.setEmail(username.trim() + "@temp.com");
+        user.setRealName(registerRequestDTO.getRealName() != null ? registerRequestDTO.getRealName().trim() : username.trim());
+        user.setEmail(registerRequestDTO.getEmail() != null ? registerRequestDTO.getEmail().trim() : username.trim() + "@temp.com");
+        user.setPhone(registerRequestDTO.getPhone());
+        user.setUserNo(registerRequestDTO.getUserNo());
         user.setStatus(1);
         user.setIsDeleted(0);
 
@@ -63,31 +66,29 @@ public class AuthServiceImpl implements AuthService {
         String password = loginRequestDTO.getPassword();
 
         if (username == null || username.trim().isEmpty()) {
-            throw new RuntimeException("Username cannot be empty");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "Username cannot be empty");
         }
         if (password == null || password.trim().isEmpty()) {
-            throw new RuntimeException("Password cannot be empty");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "Password cannot be empty");
         }
 
         User user = userService.getByUsername(username.trim());
         if (user == null) {
-            throw new RuntimeException("Username or password is incorrect");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "Username or password is incorrect");
         }
 
         if (!Integer.valueOf(1).equals(user.getStatus())) {
-            throw new RuntimeException("User is disabled");
+            throw new BusinessException(ResultCode.FORBIDDEN, "User is disabled");
         }
 
         if (Integer.valueOf(1).equals(user.getIsDeleted())) {
-            throw new RuntimeException("User does not exist");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "User does not exist");
         }
 
         boolean matched = passwordEncoder.matches(password, user.getPasswordHash());
         if (!matched) {
-            throw new RuntimeException("Username or password is incorrect");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "Username or password is incorrect");
         }
-
-
 
         String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername());
 

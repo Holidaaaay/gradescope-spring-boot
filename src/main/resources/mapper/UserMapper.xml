@@ -23,6 +23,7 @@
         is_deleted
         FROM users
         WHERE id = #{id}
+        AND is_deleted = 0
     </select>
 
     <select id="selectByUsername" resultType="com.example.gradescopespringboot.entity.User">
@@ -43,6 +44,7 @@
         is_deleted
         FROM users
         WHERE username = #{username}
+        AND is_deleted = 0
     </select>
 
 

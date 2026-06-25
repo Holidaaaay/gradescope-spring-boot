@@ -1,5 +1,6 @@
 package com.example.gradescopespringboot.controller;
 
+import com.example.gradescopespringboot.common.exception.ResourceNotFoundException;
 import com.example.gradescopespringboot.common.result.Result;
 import com.example.gradescopespringboot.entity.User;
 import com.example.gradescopespringboot.service.UserService;
@@ -25,6 +26,9 @@ public class UserController {
     @GetMapping("/{id}")
     public Result<UserVO> getById(@PathVariable Long id) {
         User user = userService.getById(id);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found with id: " + id);
+        }
         UserVO userVO = new UserVO();
         BeanUtils.copyProperties(user, userVO);
         return Result.success(userVO);

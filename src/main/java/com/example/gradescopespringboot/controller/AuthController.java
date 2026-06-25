@@ -7,6 +7,7 @@ import com.example.gradescopespringboot.security.model.LoginUser;
 import com.example.gradescopespringboot.service.AuthService;
 import com.example.gradescopespringboot.vo.auth.LoginResponseVO;
 import com.example.gradescopespringboot.vo.auth.RegisterResponseVO;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -24,13 +25,13 @@ public class AuthController {
         this.authService = authService;
     }
     @PostMapping("/register")
-    public Result<RegisterResponseVO> register(@RequestBody RegisterRequestDTO registerRequestDTO) {
+    public Result<RegisterResponseVO> register(@Valid @RequestBody RegisterRequestDTO registerRequestDTO) {
         RegisterResponseVO registerResponseVO =  authService.register(registerRequestDTO);
         return Result.success(registerResponseVO);
     }
 
     @PostMapping("/login")
-    public Result<LoginResponseVO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+    public Result<LoginResponseVO> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
         LoginResponseVO loginResponseVO = authService.login(loginRequestDTO);
         return Result.success(loginResponseVO);
     }
