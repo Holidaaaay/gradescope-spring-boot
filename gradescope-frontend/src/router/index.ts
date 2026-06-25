@@ -5,20 +5,26 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/login',
-      name: 'Login',
-      component: () => import('@/views/auth/LoginView.vue'),
-      meta: { public: true }
-    },
-    {
-      path: '/register',
-      name: 'Register',
-      component: () => import('@/views/auth/RegisterView.vue'),
-      meta: { public: true }
+      path: '/',
+      redirect: '/login'
     },
     {
       path: '/',
-      redirect: '/dashboard'
+      component: () => import('@/layouts/AuthLayout.vue'),
+      children: [
+        {
+          path: 'login',
+          name: 'Login',
+          component: () => import('@/views/auth/LoginView.vue'),
+          meta: { public: true }
+        },
+        {
+          path: 'register',
+          name: 'Register',
+          component: () => import('@/views/auth/RegisterView.vue'),
+          meta: { public: true }
+        }
+      ]
     },
     {
       path: '/dashboard',
@@ -29,7 +35,7 @@ const router = createRouter({
     {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
-      component: () => import('@/views/auth/LoginView.vue') // Placeholder 404
+      redirect: '/login'
     }
   ]
 })

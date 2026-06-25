@@ -277,12 +277,143 @@ git revert HEAD
 
 ---
 
-## 推送 #3 —— {下次推送标题}
+## 推送 #3 —— 前端项目搭建与认证页面
+
+- **日期**: 2026-06-25
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [前端里程碑 F1：前端项目搭建与认证页面](MILESTONES.md#前端里程碑-1f1前端项目搭建与认证页面)
+
+### 实现了什么
+- 初始化 Vue 3 + Vite + TypeScript 前端工程（`gradescope-frontend/`）。
+- 安装核心依赖：`vue-router@4`、`pinia`、`axios`、`element-plus`、`@element-plus/icons-vue`。
+- 配置 Vite：`@/` 别名指向 `src/`，开发代理 `/api` → `http://localhost:8080`。
+- 创建前端目录结构：`api/`、`stores/`、`router/`、`types/`、`views/`、`layouts/`、`components/`。
+- **Axios 封装** (`src/api/request.ts`)：
+  - 请求拦截器自动注入 `Authorization: Bearer <token>`
+  - 响应拦截器统一处理 401（跳转登录）、403（无权限提示）、500（服务器错误）、网络错误
+  - 与后端 `Result<T>` 结构对齐
+- **Pinia Auth Store** (`src/stores/auth.ts`)：
+  - `token` / `user` 状态，`isAuthenticated` computed
+  - `login()` / `register()` / `fetchUser()` / `logout()` 方法
+  - Token 持久化到 `localStorage`
+- **路由配置** (`src/router/index.ts`)：
+  - 路由：`/login`、`/register`、`/dashboard`（占位）
+  - `beforeEach` 路由守卫：未认证用户访问需登录页面时跳转 `/login`，已认证用户访问登录页时跳转 `/dashboard`
+- **登录页** (`src/views/auth/LoginView.vue`)：Element Plus 表单，用户名/密码输入，登录成功后跳转仪表盘。
+- **注册页** (`src/views/auth/RegisterView.vue`)：Element Plus 表单，含用户名、密码、确认密码、真实姓名、邮箱、电话、学号/工号字段，前端校验（密码一致性、邮箱格式）。
+- **认证布局** (`src/layouts/AuthLayout.vue`)：渐变背景 + 卡片式布局，统一定制登录/注册页视觉风格。
+- **类型定义** (`src/types/auth.ts`)：TypeScript 接口与后端 DTO/VO 对齐（`ApiResponse`、`LoginRequest`、`RegisterRequest`、`LoginResponse`、`RegisterResponse`、`UserVO`）。
+
+### 实现细节
+- 前端使用 Composition API (`<script setup lang="ts">`)，遵循 Vue 3 最佳实践。
+- `npm run build` 构建成功，无 TypeScript 编译错误。
+- Element Plus 组件使用 `size="large"` 和 `label-position="top"` 提升表单体验。
+- 注册页密码通过自定义 `validator` 实现确认密码一致性检查。
+
+### 新增 / 修改 / 删除的文件
+- **新增**: `gradescope-frontend/` 整个目录（Vue 3 项目脚手架 + 所有自定义代码）
+- **修改**: （无后端文件变更）
+- **删除**: （无）
+
+### 执行的测试
+- `npm run build`：构建成功，生成 `dist/` 目录
+- 手动验证：登录页和注册页组件渲染逻辑正确，路由守卫逻辑通过代码审查
+
+### 已知问题 / 限制
+- 前端尚未连接真实后端进行端到端测试（需要后端服务运行在 `localhost:8080`）。
+- 仪表盘页面为占位符，将在前端里程碑 F2 中实现。
+- 404 页面为占位符，将在后续里程碑中完善。
+- 构建产物中 `index.js` 体积较大（约 1MB），后续可通过路由懒加载和组件按需引入进一步优化。
+
+### 回滚指令
+```bash
+rm -rf gradescope-frontend/
+git checkout -- gradescope-frontend/  # 如果已提交
+git revert HEAD
+```
+
+---
+
+## 推送 #4 —— 前端 UI 设计重构与风格统一
+
+- **日期**: 2026-06-25
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [前端里程碑 F1：前端项目搭建与认证页面](MILESTONES.md#前端里程碑-1f1前端项目搭建与认证页面)（设计优化）
+
+### 实现了什么
+参考 2025 年现代 SaaS 设计趋势（Linear、Vercel、Notion 风格），对前端认证页面进行了全面视觉重构：
+
+- **全新设计系统** (`src/style.css`)：
+  - CSS 变量体系：Indigo 主色板 + Slate 中性色板
+  - 统一阴影层级（sm/md/lg/xl/card）
+  - 统一圆角体系（6px/10px/16px/24px）
+  - 8px 网格间距系统
+  - 通用动画关键帧（fadeIn、fadeInScale、slideInRight）
+  - 排版工具类（display/headline/title/body/caption/label）
+
+- **分屏布局认证页** (`src/layouts/AuthLayout.vue`)：
+  - 左侧品牌面板（44% 宽度）：Indigo 渐变背景 + 品牌 Logo + 产品标语 + 功能特性列表 + 装饰性圆环
+  - 右侧表单面板（56% 宽度）：浅灰背景 + 居中大卡片
+  - 响应式：≤960px 时隐藏左侧面板，移动端顶部留白
+
+- **精致登录页** (`src/views/auth/LoginView.vue`)：
+  - "Welcome back" 大标题 + 副标题
+  - 带图标前缀的输入框（User / Lock）
+  - 聚焦时双环主色边框效果
+  - "Remember me" 复选框 + "Forgot password?" 链接
+  - 渐变主色按钮 + hover 上浮阴影动画
+  - 优雅分隔线 + 底部注册引导
+
+- **精致注册页** (`src/views/auth/RegisterView.vue`)：
+  - "Create your account" 大标题 + 副标题
+  - 必填字段带红色星号标记
+  - "Optional Information" 分隔线区分必填/选填
+  - 所有字段带图标前缀（User / Lock / Message / Phone / Document）
+  - 与登录页完全一致的按钮和链接风格
+
+- **全局过渡动画** (`src/App.vue`)：
+  - 页面切换 fade 过渡（opacity + translateY）
+
+- **路由结构优化** (`src/router/index.ts`)：
+  - 使用嵌套路由让 `/login` 和 `/register` 共享 `AuthLayout`
+
+### 设计参考
+- [Modern Web Design Trends in 2025](https://www.duomi.fi/blog/modern-web-design-trends)
+- [Web Design Trends for 2025: Modern Design and Innovations](https://www.digital4u.gr/en/trends-stin-kataskevi-istoselidon-to-2025-monternos-schediasmos-kai-kainotomies/)
+- [Gradescope Review 2025](https://www.notieai.com/gradescope-review-2025-6-month-experience/)
+
+### 新增 / 修改 / 删除的文件
+- **修改**:
+  - `gradescope-frontend/src/style.css`（全新设计系统变量 + 动画 + 工具类）
+  - `gradescope-frontend/src/App.vue`（添加页面切换过渡动画）
+  - `gradescope-frontend/src/layouts/AuthLayout.vue`（分屏布局 + 品牌面板）
+  - `gradescope-frontend/src/views/auth/LoginView.vue`（精致表单 + 图标 + 动画）
+  - `gradescope-frontend/src/views/auth/RegisterView.vue`（精致表单 + 图标 + 动画）
+  - `gradescope-frontend/src/router/index.ts`（嵌套路由共享 AuthLayout）
+  - `CHANGELOG.md`（更新日志）
+
+### 执行的测试
+- `npm run build`：构建成功（503ms），无 TypeScript/Vue 编译错误
+
+### 已知问题 / 限制
+- 构建产物 `index.js` 约 1MB（Element Plus 完整引入），后续可通过 `unplugin-vue-components` + `unplugin-auto-import` 实现按需加载以减小体积。
+- 装饰性圆环在品牌面板中使用 CSS 实现，如需更精致的插图可后续引入 SVG 插画。
+
+### 回滚指令
+```bash
+git revert HEAD
+```
+
+---
+
+## 推送 #5 —— {下次推送标题}
 
 - **日期**: （待定）
 - **分支**: `main`
 - **提交范围**: （待定）
-- **里程碑**: [里程碑 2：RBAC（基于角色的访问控制）](MILESTONES.md#里程碑-2rbac基于角色的访问控制) 或 [前端里程碑 F1：前端项目搭建与认证页面](MILESTONES.md#前端里程碑-1f1前端项目搭建与认证页面)
+- **里程碑**: [里程碑 2：RBAC（基于角色的访问控制）](MILESTONES.md#里程碑-2rbac基于角色的访问控制) 或 [前端里程碑 F2：学生仪表盘与课程页面](MILESTONES.md#前端里程碑-2f2学生仪表盘与课程页面)
 
 ### 实现了什么
 _（待完成时填写）_
