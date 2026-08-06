@@ -473,30 +473,52 @@ git revert HEAD
 
 ---
 
-## 推送 #6 —— {下次推送标题}
+## 推送 #6 —— 修复认证 403 与添加开发测试账号
 
-- **日期**: （待定）
+- **日期**: 2026-08-06
 - **分支**: `main`
-- **提交范围**: （待定）
-- **里程碑**: [里程碑 2：RBAC（基于角色的访问控制）](MILESTONES.md#里程碑-2rbac基于角色的访问控制) 或 [前端里程碑 F2：学生仪表盘与课程页面](MILESTONES.md#前端里程碑-2f2学生仪表盘与课程页面)
+- **提交范围**: （待提交后填写）
+- **里程碑**: [前端里程碑 F1：前端项目搭建与认证页面](MILESTONES.md#前端里程碑-1f1前端项目搭建与认证页面)
 
 ### 实现了什么
-_（待完成时填写）_
+- 修复前端注册/登录提示“没有权限”（403）的问题：
+  - `vite.config.ts` 的 `/api` 代理增加 `rewrite`，把 `/api/auth/...` 正确转发到后端的 `/auth/...`。
+  - `SecurityConfig.java` 的包声明从 `security.config` 修正为 `config`，与文件路径保持一致。
+- 将 `request.ts` 中所有错误通知文案中文化（请求失败、登录已过期、没有权限、服务器错误、网络错误）。
+- 新增开发环境数据种子 `DataSeeder.java`，应用启动时自动创建 3 个测试账号：
+  - `alice` / `password123`（学生）
+  - `bob` / `password123`（教师）
+  - `charlie` / `password123`（管理员）
+- 种子程序具备幂等性：重启应用不会重复创建已有用户。
 
 ### 实现细节
-_（待完成时填写）_
+- Vite proxy 默认不会自动去掉 `/api` 前缀，需要显式 `rewrite: (path) => path.replace(/^\/api/, '')`。
+- `DataSeeder` 使用 `CommandLineRunner` 实现，注入 `UserService` 和 `PasswordEncoder`，在 Spring 上下文完全启动后执行，因此可以用 BCrypt 实时哈希密码。
+- 使用 `@Profile("!prod")` 防止生产环境意外执行种子程序。
+- `SecurityConfig` 包路径修正后，Spring Boot 的组件扫描能正确加载自定义安全过滤器链。
 
 ### 新增 / 修改 / 删除的文件
-_（待完成时填写）_
+- **新增**:
+  - `src/main/java/com/example/gradescopespringboot/config/DataSeeder.java`
+- **修改**:
+  - `src/main/java/com/example/gradescopespringboot/config/SecurityConfig.java`（修正包声明）
+  - `gradescope-frontend/vite.config.ts`（增加 `/api` rewrite）
+  - `gradescope-frontend/src/api/request.ts`（错误提示中文化）
 
 ### 执行的测试
-_（待完成时填写）_
+- `./mvnw clean compile -DskipTests`：编译通过，无 Java 错误。
+- `cd gradescope-frontend && npm run build`：构建通过，无 TypeScript/Vue 错误。
+- 待启动前后端后进行端到端登录/注册验证。
 
 ### 已知问题 / 限制
-_（待完成时填写）_
+- `DataSeeder` 目前只插入 `users` 表；`roles` / `user_roles` 表的数据将在后端 M2 RBAC 里程碑中补充。
+- `useAuthStore` 仍使用 `localStorage` 存储 JWT，后续需升级为更安全的存储方案。
 
 ### 回滚指令
-_（待完成时填写）_
+若本次推送导致问题，可回滚最近一次提交：
+```bash
+git revert HEAD
+```
 
 ---
 

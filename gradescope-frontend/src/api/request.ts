@@ -11,7 +11,7 @@ const request = axios.create({
   }
 })
 
-// Request interceptor: inject JWT
+// 请求拦截器：自动注入 JWT
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token')
@@ -23,14 +23,14 @@ request.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor: handle errors uniformly
+// 响应拦截器：统一处理后端 Result<T> 与 HTTP 错误
 request.interceptors.response.use(
   (response) => {
     const data = response.data as ApiResponse<unknown>
     if (data.code !== 200) {
       ElNotification.error({
-        title: 'Error',
-        message: data.message || 'Request failed'
+        title: '请求失败',
+        message: data.message || '操作未能完成，请稍后重试'
       })
       return Promise.reject(new Error(data.message))
     }
@@ -44,26 +44,30 @@ request.interceptors.response.use(
       if (status === 401) {
         localStorage.removeItem('token')
         window.location.href = '/login'
+        ElNotification.error({
+          title: '登录已过期',
+          message: '请重新登录'
+        })
       } else if (status === 403) {
         ElNotification.error({
-          title: 'Forbidden',
-          message: data?.message || 'You do not have permission'
+          title: '没有权限',
+          message: data?.message || '你没有执行该操作的权限'
         })
       } else if (status >= 500) {
         ElNotification.error({
-          title: 'Server Error',
-          message: 'Internal server error, please try again later'
+          title: '服务器错误',
+          message: '服务器内部错误，请稍后重试'
         })
       } else {
         ElNotification.error({
-          title: 'Error',
-          message: data?.message || 'Request failed'
+          title: '请求失败',
+          message: data?.message || '操作未能完成，请稍后重试'
         })
       }
     } else {
       ElNotification.error({
-        title: 'Network Error',
-        message: 'Network connection failed, please check your connection'
+        title: '网络错误',
+        message: '网络连接失败，请检查网络或稍后重试'
       })
     }
     return Promise.reject(error)

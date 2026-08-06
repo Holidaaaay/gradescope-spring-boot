@@ -1,4 +1,4 @@
-package com.example.gradescopespringboot.security.config;
+package com.example.gradescopespringboot.config;
 
 import com.example.gradescopespringboot.security.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;

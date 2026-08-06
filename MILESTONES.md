@@ -622,6 +622,8 @@
 12. [x] **UI 重设计**: 基于 `frontend-design` plugin 的设计规范，重构 `style.css`、`AuthLayout.vue`、`LoginView.vue`、`RegisterView.vue`。
 13. [x] **中文化**: 登录/注册页所有文案、验证提示、品牌面板文案全部改为中文。
 14. [x] **修复提交按钮不可见**: 移除导致按钮在部分场景下无法显示的 `opacity: 0` + 入场动画写法。
+15. [x] **修复认证 403**: Vite 代理增加 `/api` rewrite；修正 `SecurityConfig` 包声明。
+16. [x] **开发测试账号**: 新增 `DataSeeder`，启动后端时自动创建 alice/bob/charlie 三个测试账号。
 
 ### 验收标准
 - [x] `npm run dev` 启动前端，无编译错误。
