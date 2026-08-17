@@ -659,4 +659,82 @@ git revert HEAD
 
 ---
 
+## 推送 #9 —— 后端管理员管理模块
+
+- **日期**: 2026-08-17
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [里程碑 3：管理员管理模块](MILESTONES.md#里程碑-3管理员管理模块)
+
+### 实现了什么
+- 创建 `PageResult<T>` 统一分页响应包装器（含 `list`、`total`、`pageNum`、`pageSize`、`pages`），为后续 PageHelper 做准备。
+- 创建 `AdminUserListVO`：管理员视角用户列表对象，包含角色列表，不暴露 `passwordHash`。
+- 扩展 `UserMapper` / `UserMapper.xml`：
+  - `countAdminUsers` + `selectAdminUserList`：支持按 `role`、`status` 过滤的手动分页查询，使用 `GROUP_CONCAT` 聚合角色编码。
+  - `updateStatusById`：启用/禁用用户。
+  - `countUsers` / `countCourses` / `countAssignments` / `countSubmissions`：仪表盘统计。
+- 创建 `AdminUserStatusUpdateDTO`（`status` 字段 `@NotNull` 校验）。
+- 创建 `AdminService` / `AdminServiceImpl`：
+  - `listUsers`：分页 + 过滤 + 角色列表展开。
+  - `getUserById`：按 ID 查询并组装角色。
+  - `updateUserStatus`：原子状态切换（`@Transactional`）。
+  - `dashboardStats`：返回四项统计计数。
+- 完善 `AdminController`：
+  - `GET /admin/users`
+  - `GET /admin/users/{id}`
+  - `PATCH /admin/users/{id}/status`
+  - `GET /admin/dashboard/stats`
+- 新增 `AdminControllerIntegrationTest`：
+  - 管理员可访问用户列表、按角色过滤、查看详情、禁用用户。
+  - 非管理员访问 `/admin/**` 返回 403。
+  - 禁用用户后登录失败。
+
+### 实现细节
+- 分页默认值：`pageNum=1`，`pageSize=10`，最大 `pageSize=100`。
+- 用户列表 SQL 使用 `LEFT JOIN user_roles / roles` + `GROUP_CONCAT`，避免在列表接口中对每个用户单独查角色（N+1）。
+- 状态切换在 service 层校验 `status` 只能是 0 或 1，并使用 `@Transactional`。
+- `AdminUserListVO` 中的 `roleCodes` 字段用于接收 SQL `GROUP_CONCAT`，service 层将其拆分为 `roles` 列表返回给前端。
+
+### 新增 / 修改 / 删除的文件
+- **新增**:
+  - `src/main/java/com/example/gradescopespringboot/common/result/PageResult.java`
+  - `src/main/java/com/example/gradescopespringboot/vo/admin/AdminUserListVO.java`
+  - `src/main/java/com/example/gradescopespringboot/dto/admin/AdminUserStatusUpdateDTO.java`
+  - `src/main/java/com/example/gradescopespringboot/service/AdminService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/AdminServiceImpl.java`
+  - `src/test/java/com/example/gradescopespringboot/AdminControllerIntegrationTest.java`
+- **修改**:
+  - `src/main/java/com/example/gradescopespringboot/controller/AdminController.java`（实现全部管理员端点）
+  - `src/main/java/com/example/gradescopespringboot/mapper/UserMapper.java`（新增管理员相关方法）
+  - `src/main/resources/mapper/UserMapper.xml`（新增分页、过滤、统计 SQL）
+  - `MILESTONES.md`（M3 标记完成）
+  - `CHANGELOG.md`（本记录）
+- **删除**: （无）
+
+### 执行的测试
+- `mvn clean test`：**18 个测试全部通过**。
+  - `GlobalExceptionHandlerTest`（5）
+  - `GradescopeSpringBootApplicationTests`（1）
+  - `UserMapperTest`（1）
+  - `RbacIntegrationTest`（4）
+  - `CustomUserDetailsServiceTest`（1）
+  - `AdminControllerIntegrationTest`（6）
+- `cd gradescope-frontend && npm run build`：构建成功，无 TypeScript/Vue 编译错误。
+- 手动 curl 验证：
+  - `charlie`（ADMIN）`GET /admin/users` → 200，返回分页列表。
+  - `alice`（STUDENT）`GET /admin/users` → 403。
+  - `PATCH /admin/users/{id}/status` → 状态更新，禁用后登录返回 code 403。
+
+### 已知问题 / 限制
+- 新注册用户默认无角色，需管理员在后台分配（未来可在注册流程默认分配 `STUDENT`）。
+- 分页仍为手动 `LIMIT/OFFSET`；M10 中可替换为 PageHelper。
+- `localStorage` JWT 存储仍是临时方案，后续里程碑中需升级。
+
+### 回滚指令
+```bash
+git revert HEAD
+```
+
+---
+
 > **如何更新本文档**: 每次推送到远程仓库后，在日志顶部（本行下方）按既定格式追加新记录。更新页眉中的"最后更新"日期。关联 `MILESTONES.md` 中的相关里程碑并更新其状态。
