@@ -1,6 +1,6 @@
 # 变更日志 / 推送记录
 
-> **状态**: 动态文档 | **最后更新**: 2026-06-25  
+> **状态**: 动态文档 | **最后更新**: 2026-08-17  
 > **用途**: 按时间顺序记录每次推送到远程仓库的操作。每条记录 documenting 实现了什么、如何实现的、关键设计决策，以及任何已知问题或回滚指令。用于追踪进度、调试回归问题、理解历史上下文。
 
 ---
@@ -516,6 +516,57 @@ git revert HEAD
 
 ### 回滚指令
 若本次推送导致问题，可回滚最近一次提交：
+```bash
+git revert HEAD
+```
+
+---
+
+## 推送 #7 —— F1 联调完成与 MySQL Docker 连接修复
+
+- **日期**: 2026-08-17
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [前端里程碑 F1：前端项目搭建与认证页面](MILESTONES.md#前端里程碑-1f1前端项目搭建与认证页面)
+
+### 实现了什么
+- 修复后端在 Docker MySQL 8 默认 `caching_sha2_password` 插件下无法连接的问题：
+  - 在 `application.properties` 的 JDBC URL 中追加 `allowPublicKeyRetrieval=true`。
+- 完成前端 F1 里程碑的后端联调与端到端验证：
+  - 启动 Spring Boot 后端（端口 8080）与 Vue 开发服务器（端口 5173）。
+  - 使用 DataSeeder 账号 `alice` / `password123` 登录成功并写入 `localStorage` token。
+  - 使用 Playwright + 系统 Chrome 验证注册新用户、自动跳转登录页、新用户再次登录成功。
+  - 验证 Vite 代理 `/api` → `http://localhost:8080` 工作正常。
+- 更新 `MILESTONES.md`：
+  - 将前端里程碑 F1 标记为已完成。
+  - 将后端里程碑 M1（全局异常处理与输入校验）标记为已完成（实际已实现并推送于 `a3c1800`，文档状态此前未同步）。
+
+### 实现细节
+- `allowPublicKeyRetrieval=true` 仅用于开发环境；生产环境应使用 SSL 或配置 MySQL 为 `mysql_native_password`。
+- Playwright 验证脚本使用系统已安装的 Chrome（`channel: 'chrome'`），避免在仓库中引入浏览器依赖。
+
+### 新增 / 修改 / 删除的文件
+- **修改**:
+  - `src/main/resources/application.properties`（追加 `allowPublicKeyRetrieval=true`）
+  - `MILESTONES.md`（F1 与 M1 状态改为已完成，更新验收标准勾选）
+  - `CHANGELOG.md`（本记录）
+- **删除**: （无）
+
+### 执行的测试
+- `mvn clean test`：7 个测试全部通过（含 `GlobalExceptionHandlerTest`、`GradescopeSpringBootApplicationTests`、`UserMapperTest`）。
+- `cd gradescope-frontend && npm run build`：构建成功，无 TypeScript/Vue 编译错误。
+- Playwright 端到端验证（系统 Chrome）：
+  - 登录 `alice` / `password123` → 跳转 `/dashboard`，token 写入 `localStorage`。
+  - 注册随机新用户 → 后端返回 200，前端跳转 `/login`。
+  - 新用户登录 → 跳转 `/dashboard`，token 写入 `localStorage`。
+- curl 直接验证后端：`POST /auth/login` 与 `POST /auth/register` 均返回 200。
+
+### 已知问题 / 限制
+- `allowPublicKeyRetrieval=true` 会降低安全性，仅用于本地 Docker 开发。
+- `useAuthStore` 仍使用 `localStorage` 存储 JWT，后续里程碑中需升级为更安全的存储方案。
+- Playwright 验证脚本为临时文件，未纳入仓库；后续 F2+ 可引入正式的 `@playwright/test` E2E 套件。
+
+### 回滚指令
 ```bash
 git revert HEAD
 ```

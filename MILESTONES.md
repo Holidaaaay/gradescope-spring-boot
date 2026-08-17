@@ -72,37 +72,38 @@
 
 ## 里程碑 1：全局异常处理与输入校验
 
-**状态**: `[ ]` **未开始**  
+**状态**: `[x]` **已完成**  
 **依赖**: 里程碑 0  
-**预估工作量**: 小（1 个会话）
+**预估工作量**: 小（1 个会话）  
+**完成日期**: 2026-06-25
 
 ### 目标
 消除原始异常堆栈直接返回给客户端的情况。提供有意义的结构化错误响应。校验所有传入 DTO。
 
 ### 子任务
-1. [ ] **创建自定义异常体系**:
+1. [x] **创建自定义异常体系**:
    - `BusinessException`（运行时异常，带 `code` 和 `message`）。
    - `ResourceNotFoundException extends BusinessException`。
    - `ValidationException extends BusinessException`。
    - `UnauthorizedException extends BusinessException`。
-2. [ ] **创建 `@ControllerAdvice` 类**（`GlobalExceptionHandler`）:
+2. [x] **创建 `@ControllerAdvice` 类**（`GlobalExceptionHandler`）:
    - 处理 `BusinessException` → 返回 `Result.fail(code, message)`。
    - 处理 `MethodArgumentNotValidException` → 返回 `Result.fail(400, 字段错误)`。
    - 处理通用 `Exception` → 返回 `Result.fail(500, "服务器内部错误")`（服务端记录完整堆栈）。
-3. [ ] **重构 `AuthServiceImpl`**，将原始 `RuntimeException` 改为抛出 `BusinessException`。
-4. [ ] **为 DTO 添加 Jakarta Validation 注解**:
+3. [x] **重构 `AuthServiceImpl`**，将原始 `RuntimeException` 改为抛出 `BusinessException`。
+4. [x] **为 DTO 添加 Jakarta Validation 注解**:
    - `RegisterRequestDTO`：`username` 和 `password` 加 `@NotBlank`，`username` 加 `@Size(min=3, max=50)`，`password` 加 `@Size(min=8)`。
    - `LoginRequestDTO`：两个字段都加 `@NotBlank`。
-5. [ ] **在所有控制器的 `@RequestBody` 参数上添加 `@Valid` 注解**。
-6. [ ] **更新 `UserMapper.xml`**，在 `selectById` 和 `selectByUsername` 中加入 `AND is_deleted = 0`。
-7. [ ] **创建 `ResultCode` 枚举**（推荐但可选）以标准化 `code` 值（例如 `SUCCESS(200)`、`PARAM_ERROR(400)`、`UNAUTHORIZED(401)`、`FORBIDDEN(403)`、`NOT_FOUND(404)`、`INTERNAL_ERROR(500)`）。
+5. [x] **在所有控制器的 `@RequestBody` 参数上添加 `@Valid` 注解**。
+6. [x] **更新 `UserMapper.xml`**，在 `selectById` 和 `selectByUsername` 中加入 `AND is_deleted = 0`。
+7. [x] **创建 `ResultCode` 枚举**（推荐但可选）以标准化 `code` 值（例如 `SUCCESS(200)`、`PARAM_ERROR(400)`、`UNAUTHORIZED(401)`、`FORBIDDEN(403)`、`NOT_FOUND(404)`、`INTERNAL_ERROR(500)`）。
 
 ### 验收标准
-- [ ] 以空用户名调用 `POST /auth/register` 返回 `{"code":400,"message":"username: must not be blank"}`。
-- [ ] 以错误密码调用 `POST /auth/login` 返回结构化的 `Result`，code 为 400，**不是**堆栈跟踪。
-- [ ] 查询不存在（或已删除）的用户 `GET /users/999` 返回 code 404。
-- [ ] 所有现有测试仍然通过。
-- [ ] `UserMapper.selectById` 对已逻辑删除的用户返回 `null`。
+- [x] 以空用户名调用 `POST /auth/register` 返回 `{"code":400,"message":"username: must not be blank"}`。
+- [x] 以错误密码调用 `POST /auth/login` 返回结构化的 `Result`，code 为 400，**不是**堆栈跟踪。
+- [x] 查询不存在（或已删除）的用户 `GET /users/999` 返回 code 404。
+- [x] 所有现有测试仍然通过。
+- [x] `UserMapper.selectById` 对已逻辑删除的用户返回 `null`。
 
 ### 测试方法
 1. 使用 `MockMvc` 单元测试 `GlobalExceptionHandler`:
@@ -113,18 +114,18 @@
    - 查询已删除用户 → 断言 404。
 
 ### 代码审查清单
-- [ ] 业务层不再抛出原始 `RuntimeException`。
-- [ ] 所有适用 DTO 都带有校验注解。
-- [ ] 所有接受 DTO 的控制器端点都带有 `@Valid`。
-- [ ] `GlobalExceptionHandler` 捕获了**所有**预期异常类型。
-- [ ] HTTP 响应中不泄露敏感信息（如堆栈跟踪）。
-- [ ] `UserMapper.xml` 所有查询中都存在 `is_deleted = 0`。
+- [x] 业务层不再抛出原始 `RuntimeException`。
+- [x] 所有适用 DTO 都带有校验注解。
+- [x] 所有接受 DTO 的控制器端点都带有 `@Valid`。
+- [x] `GlobalExceptionHandler` 捕获了**所有**预期异常类型。
+- [x] HTTP 响应中不泄露敏感信息（如堆栈跟踪）。
+- [x] `UserMapper.xml` 所有查询中都存在 `is_deleted = 0`。
 
 ### 推送条件
-- [ ] 所有子任务完成。
-- [ ] `mvn clean test` 通过。
-- [ ] 错误场景的手动 Postman/curl 测试通过。
-- [ ] `auth-test.html` 在注册/登录的成功路径下仍然正常工作。
+- [x] 所有子任务完成。
+- [x] `mvn clean test` 通过。
+- [x] 错误场景的手动 Postman/curl 测试通过。
+- [x] `auth-test.html` 在注册/登录的成功路径下仍然正常工作。
 
 ---
 
@@ -598,11 +599,12 @@
 
 ## 前端里程碑 1（F1）：前端项目搭建与认证页面
 
-**状态**: `[~]` **进行中**  
+**状态**: `[x]` **已完成**  
 **依赖**: 后端里程碑 0（JWT 认证已完成）  
-**预估工作量**: 中（2 个会话）
+**预估工作量**: 中（2 个会话）  
+**完成日期**: 2026-08-17
 
-> **备注**: 项目脚手架、Axios/Pinia/路由、登录/注册页功能已完成；UI 已根据 `frontend-design` plugin  redesign 规范重构。剩余待后端联调的手动验收项。
+> **备注**: 项目脚手架、Axios/Pinia/路由、登录/注册页功能已完成；UI 已根据 `frontend-design` plugin  redesign 规范重构；前后端联调通过。
 
 ### 目标
 搭建 Vue 3 前端工程，完成登录页和注册页，实现与后端 JWT 认证的完整对接。
@@ -628,11 +630,11 @@
 ### 验收标准
 - [x] `npm run dev` 启动前端，无编译错误。
 - [x] 访问 `http://localhost:5173/login` 显示登录页，Element Plus 样式正常。
-- [~] 输入正确凭据登录 → 成功存储 token 到 `localStorage`，页面跳转 `/dashboard`。（需后端联调验证）
-- [~] 输入错误密码登录 → 顶部弹出错误提示（后端 `message` 内容）。（需后端联调验证）
-- [~] 注册新用户 → 后端创建用户，成功后跳转登录页。（需后端联调验证）
+- [x] 输入正确凭据登录 → 成功存储 token 到 `localStorage`，页面跳转 `/dashboard`。（已通过 Playwright 联调验证）
+- [x] 输入错误密码登录 → 顶部弹出错误提示（后端 `message` 内容）。（已通过 Playwright 联调验证）
+- [x] 注册新用户 → 后端创建用户，成功后跳转登录页。（已通过 Playwright 联调验证）
 - [x] 直接访问需要登录的页面（如 `/dashboard`）→ 无令牌时自动跳转 `/login`。
-- [~] 刷新页面后，若 `localStorage` 有有效 token，保持登录状态（通过 `authStore` 初始化读取）。（需后端联调验证 token 有效性）
+- [x] 刷新页面后，若 `localStorage` 有有效 token，保持登录状态（通过 `authStore` 初始化读取）。（已通过 Playwright 联调验证）
 - [x] `npm run build` 构建成功，无 TypeScript/Vue 编译错误。
 - [x] 登录页与注册页视觉风格符合 `frontend-design` redesign 规范。
 
@@ -653,7 +655,7 @@
 ### 推送条件
 - [x] 登录/注册页面在浏览器中可渲染（样式、布局、动画）。
 - [x] `npm run build` 无 TypeScript 编译错误。
-- [~] 登录/注册流程在浏览器中完全跑通。（需后端服务启动后验证）
+- [x] 登录/注册流程在浏览器中完全跑通。（已通过 Playwright + 系统 Chrome 端到端验证）
 - [x] 无 ESLint 警告（`npm run lint`）或已记录可接受的警告。
 
 ---
@@ -873,7 +875,7 @@
 | 编号 | 里程碑 | 状态 | 完成日期 |
 |------|--------|------|----------|
 | 0 | 项目基础与 JWT 认证 | ✅ 已完成 | 2026-03-27 |
-| 1 | 全局异常处理与输入校验 | ⬜ 未开始 | — |
+| 1 | 全局异常处理与输入校验 | ✅ 已完成 | 2026-06-25 |
 | 2 | RBAC（基于角色的访问控制） | ⬜ 未开始 | — |
 | 3 | 管理员管理模块 | ⬜ 未开始 | — |
 | 4 | 课程管理模块 | ⬜ 未开始 | — |
@@ -883,7 +885,7 @@
 | 8 | 评分与反馈模块 | ⬜ 未开始 | — |
 | 9 | 课程资料模块 | ⬜ 未开始 | — |
 | 10 | 分页、缓存与打磨 | ⬜ 未开始 | — |
-| F1 | 前端项目搭建与认证页面 | 🔄 进行中 | 2026-06-25 |
+| F1 | 前端项目搭建与认证页面 | ✅ 已完成 | 2026-08-17 |
 | F2 | 学生仪表盘与课程页面 | ⬜ 未开始 | — |
 | F3 | 教师仪表盘与课程/作业管理 | ⬜ 未开始 | — |
 | F4 | 评分页面与成绩统计 | ⬜ 未开始 | — |
