@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gradescopespringboot.mapper.RoleMapper">
+
+    <select id="selectById" resultType="com.example.gradescopespringboot.entity.Role">
+        SELECT
+            id,
+            role_code,
+            role_name,
+            description,
+            status,
+            created_at,
+            updated_at
+        FROM roles
+        WHERE id = #{id}
+          AND status = 1
+    </select>
+
+    <select id="selectByCode" resultType="com.example.gradescopespringboot.entity.Role">
+        SELECT
+            id,
+            role_code,
+            role_name,
+            description,
+            status,
+            created_at,
+            updated_at
+        FROM roles
+        WHERE role_code = #{roleCode}
+          AND status = 1
+    </select>
+
+    <select id="selectAllActive" resultType="com.example.gradescopespringboot.entity.Role">
+        SELECT
+            id,
+            role_code,
+            role_name,
+            description,
+            status,
+            created_at,
+            updated_at
+        FROM roles
+        WHERE status = 1
+    </select>
+
+    <insert id="insert"
+            parameterType="com.example.gradescopespringboot.entity.Role"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO roles (
+            role_code,
+            role_name,
+            description,
+            status
+        ) VALUES (
+            #{roleCode},
+            #{roleName},
+            #{description},
+            #{status}
+        )
+    </insert>
+
+</mapper>

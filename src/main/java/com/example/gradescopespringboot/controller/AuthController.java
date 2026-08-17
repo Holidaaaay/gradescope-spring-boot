@@ -13,7 +13,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
@@ -24,9 +26,10 @@ public class AuthController {
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
+
     @PostMapping("/register")
     public Result<RegisterResponseVO> register(@Valid @RequestBody RegisterRequestDTO registerRequestDTO) {
-        RegisterResponseVO registerResponseVO =  authService.register(registerRequestDTO);
+        RegisterResponseVO registerResponseVO = authService.register(registerRequestDTO);
         return Result.success(registerResponseVO);
     }
 
@@ -40,9 +43,14 @@ public class AuthController {
     public Result<Map<String, Object>> me(Authentication authentication) {
         LoginUser loginUser = (LoginUser) authentication.getPrincipal();
 
+        List<String> roles = authentication.getAuthorities().stream()
+                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                .collect(Collectors.toList());
+
         Map<String, Object> data = new HashMap<>();
         data.put("userId", loginUser.getUserId());
         data.put("username", loginUser.getUsername());
+        data.put("roles", roles);
 
         return Result.success(data);
     }

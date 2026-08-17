@@ -4,25 +4,38 @@ import com.example.gradescopespringboot.common.exception.BusinessException;
 import com.example.gradescopespringboot.common.exception.ResultCode;
 import com.example.gradescopespringboot.dto.auth.LoginRequestDTO;
 import com.example.gradescopespringboot.dto.auth.RegisterRequestDTO;
+import com.example.gradescopespringboot.entity.Role;
 import com.example.gradescopespringboot.entity.User;
+import com.example.gradescopespringboot.entity.UserRole;
 import com.example.gradescopespringboot.security.util.JwtTokenProvider;
 import com.example.gradescopespringboot.service.AuthService;
+import com.example.gradescopespringboot.service.RoleService;
+import com.example.gradescopespringboot.service.UserRoleService;
 import com.example.gradescopespringboot.service.UserService;
 import com.example.gradescopespringboot.vo.auth.LoginResponseVO;
 import com.example.gradescopespringboot.vo.auth.RegisterResponseVO;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class AuthServiceImpl implements AuthService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
+    private final UserRoleService userRoleService;
+    private final RoleService roleService;
     private final JwtTokenProvider jwtTokenProvider;
-    @Autowired
-    public AuthServiceImpl(UserService userService, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+
+    public AuthServiceImpl(UserService userService,
+                           UserRoleService userRoleService,
+                           RoleService roleService,
+                           PasswordEncoder passwordEncoder,
+                           JwtTokenProvider jwtTokenProvider) {
         this.userService = userService;
+        this.userRoleService = userRoleService;
+        this.roleService = roleService;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
     }
@@ -90,8 +103,21 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ResultCode.BAD_REQUEST, "Username or password is incorrect");
         }
 
-        String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername());
+        List<String> roleCodes = loadRoleCodesByUserId(user.getId());
+        String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername(), roleCodes);
 
         return new LoginResponseVO(token, "Bearer");
+    }
+
+    private List<String> loadRoleCodesByUserId(Long userId) {
+        List<Long> roleIds = userRoleService.getByUserId(userId).stream()
+                .map(UserRole::getRoleId)
+                .toList();
+
+        return roleIds.stream()
+                .map(roleService::getById)
+                .flatMap(java.util.Optional::stream)
+                .map(Role::getRoleCode)
+                .toList();
     }
 }

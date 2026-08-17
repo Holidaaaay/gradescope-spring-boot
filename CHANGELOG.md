@@ -526,7 +526,7 @@ git revert HEAD
 
 - **日期**: 2026-08-17
 - **分支**: `main`
-- **提交范围**: `553e40b..9c9b9d6`
+- **提交范围**: `553e40b..4cb335b`
 - **里程碑**: [前端里程碑 F1：前端项目搭建与认证页面](MILESTONES.md#前端里程碑-1f1前端项目搭建与认证页面)
 
 ### 实现了什么
@@ -565,6 +565,92 @@ git revert HEAD
 - `allowPublicKeyRetrieval=true` 会降低安全性，仅用于本地 Docker 开发。
 - `useAuthStore` 仍使用 `localStorage` 存储 JWT，后续里程碑中需升级为更安全的存储方案。
 - Playwright 验证脚本为临时文件，未纳入仓库；后续 F2+ 可引入正式的 `@playwright/test` E2E 套件。
+
+### 回滚指令
+```bash
+git revert HEAD
+```
+
+---
+
+## 推送 #8 —— 后端 RBAC 基于角色的访问控制
+
+- **日期**: 2026-08-17
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [里程碑 2：RBAC（基于角色的访问控制）](MILESTONES.md#里程碑-2rbac基于角色的访问控制)
+
+### 实现了什么
+- 创建 RBAC 实体：`Role`、`UserRole`，对应 `roles` 与 `user_roles` 表。
+- 创建 MyBatis XML Mapper：`RoleMapper` + `RoleMapper.xml`、`UserRoleMapper` + `UserRoleMapper.xml`。
+- 创建 Service 层：`RoleService` / `RoleServiceImpl`、`UserRoleService` / `UserRoleServiceImpl`。
+- 在 `mysql.txt` 追加默认角色 INSERT：`ADMIN`、`STUDENT`、`TA`、`INSTRUCTOR`。
+- 修改 `CustomUserDetailsService`：从 `user_roles` + `roles` 表加载真实角色，映射为 `SimpleGrantedAuthority("ROLE_" + roleCode)`。
+- 重构 `LoginUser`：移除硬编码 `ROLE_USER`，改为通过构造函数接收 authorities；新增 `withRoleCodes` 工厂方法。
+- 修改 `JwtTokenProvider.generateToken`：新增 `roles` 声明，登录时把用户角色写入 JWT。
+- 修改 `JwtAuthenticationFilter`：从 JWT 解析 `roles` 声明并重建 `GrantedAuthority` 列表。
+- 更新 `SecurityConfig`：
+  - `/admin/**` 仅 `ADMIN` 可访问。
+  - `POST /courses` 仅 `INSTRUCTOR` 或 `ADMIN` 可访问。
+  - `/auth/me` 需要认证；注册/登录保持公开。
+- 更新 `AuthController.me`：响应中增加 `roles` 字段。
+- 更新 `DataSeeder`：自动创建默认角色，为 `alice`/`bob`/`charlie` 分配 `STUDENT`/`INSTRUCTOR`/`ADMIN`，并对已存在但无角色的用户补分配角色。
+- 新增 `AdminController`（占位）：`GET /admin/dashboard/stats`，用于验证 ADMIN 角色权限。
+- 新增测试：
+  - `CustomUserDetailsServiceTest`（Mockito 单元测试）。
+  - `RbacIntegrationTest`（MockMvc 集成测试）。
+
+### 实现细节
+- 数据库角色编码（如 `ADMIN`）与 JWT 中的 `roles` 声明保持一致；Spring Security 自动拼接 `ROLE_` 前缀进行鉴权。
+- `CustomUserDetailsService` 使用 stream + JOIN-free 查询加载角色；当前用户量小，N+1 可接受，后续数据量大时可改为一次性 JOIN。
+- `DataSeeder` 保持幂等：角色/用户存在则跳过，已存在用户无角色则补分配。
+
+### 新增 / 修改 / 删除的文件
+- **新增**:
+  - `src/main/java/com/example/gradescopespringboot/entity/Role.java`
+  - `src/main/java/com/example/gradescopespringboot/entity/UserRole.java`
+  - `src/main/java/com/example/gradescopespringboot/mapper/RoleMapper.java`
+  - `src/main/resources/mapper/RoleMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/mapper/UserRoleMapper.java`
+  - `src/main/resources/mapper/UserRoleMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/service/RoleService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/RoleServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/service/UserRoleService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/UserRoleServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/AdminController.java`
+  - `src/test/java/com/example/gradescopespringboot/RbacIntegrationTest.java`
+  - `src/test/java/com/example/gradescopespringboot/security/service/CustomUserDetailsServiceTest.java`
+- **修改**:
+  - `src/main/java/com/example/gradescopespringboot/security/model/LoginUser.java`（移除硬编码角色）
+  - `src/main/java/com/example/gradescopespringboot/security/service/CustomUserDetailsService.java`（加载真实角色）
+  - `src/main/java/com/example/gradescopespringboot/security/util/JwtTokenProvider.java`（roles 声明）
+  - `src/main/java/com/example/gradescopespringboot/security/filter/JwtAuthenticationFilter.java`（解析 JWT 角色）
+  - `src/main/java/com/example/gradescopespringboot/config/SecurityConfig.java`（角色鉴权规则）
+  - `src/main/java/com/example/gradescopespringboot/controller/AuthController.java`（me 返回 roles）
+  - `src/main/java/com/example/gradescopespringboot/service/impl/AuthServiceImpl.java`（登录时查询角色写入 token）
+  - `src/main/java/com/example/gradescopespringboot/config/DataSeeder.java`（角色种子与分配）
+  - `mysql.txt`（默认角色 INSERT）
+  - `MILESTONES.md`（M2 标记完成）
+  - `CHANGELOG.md`（本记录，并修正推送 #7 提交范围为 `553e40b..4cb335b`）
+- **删除**: （无）
+
+### 执行的测试
+- `mvn clean test`：12 个测试全部通过。
+  - `GlobalExceptionHandlerTest`（5）
+  - `GradescopeSpringBootApplicationTests`（1）
+  - `UserMapperTest`（1）
+  - `RbacIntegrationTest`（4）
+  - `CustomUserDetailsServiceTest`（1）
+- `cd gradescope-frontend && npm run build`：构建成功，无 TypeScript/Vue 编译错误。
+- 手动 curl 验证：
+  - `alice`（STUDENT）访问 `/admin/dashboard/stats` → 403。
+  - `charlie`（ADMIN）访问 `/admin/dashboard/stats` → 200。
+  - `GET /auth/me` 返回包含 `roles` 列表。
+
+### 已知问题 / 限制
+- `CustomUserDetailsService` 当前按 userId 查询 `user_roles` 再逐条查 `roles`，数据量大时建议改为一次 JOIN。
+- 新注册用户默认没有任何角色；后续可在注册流程中分配默认 `STUDENT` 角色，或由管理员在后台分配。
+- `localStorage` JWT 存储仍是临时方案，后续里程碑中需升级为更安全的存储。
 
 ### 回滚指令
 ```bash

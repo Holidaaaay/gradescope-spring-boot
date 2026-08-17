@@ -6,14 +6,24 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 public class LoginUser implements UserDetails {
 
     private final User user;
+    private final Collection<? extends GrantedAuthority> authorities;
 
-    public LoginUser(User user) {
+    public LoginUser(User user, Collection<? extends GrantedAuthority> authorities) {
         this.user = user;
+        this.authorities = authorities;
+    }
+
+    public static LoginUser withRoleCodes(User user, List<String> roleCodes) {
+        List<SimpleGrantedAuthority> authorities = roleCodes.stream()
+                .map(roleCode -> "ROLE_" + roleCode)
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+        return new LoginUser(user, authorities);
     }
 
     public Long getUserId() {
@@ -26,8 +36,7 @@ public class LoginUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 现在先不给复杂角色，先给一个最简单的默认权限
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        return authorities;
     }
 
     @Override

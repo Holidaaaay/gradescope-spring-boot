@@ -131,34 +131,35 @@
 
 ## 里程碑 2：RBAC（基于角色的访问控制）
 
-**状态**: `[ ]` **未开始**  
+**状态**: `[x]` **已完成**  
 **依赖**: 里程碑 1  
-**预估工作量**: 中（2-3 个会话）
+**预估工作量**: 中（2-3 个会话）  
+**完成日期**: 2026-08-17
 
 ### 目标
 替换 `LoginUser` 中硬编码的 `ROLE_USER`，使用数据库中的真实角色。实现全局和课程域的授权。
 
 ### 子任务
-1. [ ] **创建实体类**: `Role`、`UserRole`。
-2. [ ] **创建 Mapper**: `RoleMapper.java` + `RoleMapper.xml`、`UserRoleMapper.java` + `UserRoleMapper.xml`。
-3. [ ] **创建 Service**: `RoleService`、`UserRoleService` 及基础 CRUD。
-4. [ ] **播种默认角色**: 在 `mysql.txt` 或通过数据 SQL 文件插入：`ADMIN`、`STUDENT`、`TA`、`INSTRUCTOR`。
-5. [ ] **修改 `CustomUserDetailsService`**: 从 `user_roles` + `roles` 表加载角色并映射为 `GrantedAuthority`。
-6. [ ] **修改 `LoginUser.getAuthorities()`**: 返回真实角色而非硬编码 `ROLE_USER`。
-7. [ ] **修改 `JwtTokenProvider.generateToken`**: 在 JWT 声明中包含角色代码。
-8. [ ] **修改 `JwtAuthenticationFilter`**: 从 JWT 解析角色并重建 `GrantedAuthority` 列表。
-9. [ ] **更新 `SecurityConfig`**:
-   - `.requestMatchers("/admin/**").hasRole("ADMIN")`
-   - `.requestMatchers(HttpMethod.POST, "/courses").hasAnyRole("INSTRUCTOR", "ADMIN")`
-   - 其余端点保持 `.authenticated()` 基线。
-10. [ ] **通过 SQL 或启动脚本创建带角色的测试用户**。
+1. [x] **创建实体类**: `Role`、`UserRole`。
+2. [x] **创建 Mapper**: `RoleMapper.java` + `RoleMapper.xml`、`UserRoleMapper.java` + `UserRoleMapper.xml`。
+3. [x] **创建 Service**: `RoleService`、`UserRoleService` 及基础 CRUD。
+4. [x] **播种默认角色**: 在 `mysql.txt` 或通过数据 SQL 文件插入：`ADMIN`、`STUDENT`、`TA`、`INSTRUCTOR`。
+5. [x] **修改 `CustomUserDetailsService`**: 从 `user_roles` + `roles` 表加载角色并映射为 `GrantedAuthority`。
+6. [x] **修改 `LoginUser.getAuthorities()`**: 返回真实角色而非硬编码 `ROLE_USER`。
+7. [x] **修改 `JwtTokenProvider.generateToken`**: 在 JWT 声明中包含角色代码。
+8. [x] **修改 `JwtAuthenticationFilter`**: 从 JWT 解析角色并重建 `GrantedAuthority` 列表。
+9. [x] **更新 `SecurityConfig`**:
+   - [x] `.requestMatchers("/admin/**").hasRole("ADMIN")`
+   - [x] `.requestMatchers(HttpMethod.POST, "/courses").hasAnyRole("INSTRUCTOR", "ADMIN")`
+   - [x] 其余端点保持 `.authenticated()` 基线。
+10. [x] **通过 SQL 或启动脚本创建带角色的测试用户**。
 
 ### 验收标准
-- [ ] 具有 `STUDENT` 角色的用户无法访问 `/admin/**`（收到 403）。
-- [ ] 具有 `ADMIN` 角色的用户可以访问 `/admin/**`。
-- [ ] `GET /auth/me` 除 userId 和 username 外，还返回用户角色列表。
-- [ ] JWT 令牌载荷包含 `roles` 声明。
-- [ ] 角色数据从 `roles` 和 `user_roles` 表加载，非硬编码。
+- [x] 具有 `STUDENT` 角色的用户无法访问 `/admin/**`（收到 403）。
+- [x] 具有 `ADMIN` 角色的用户可以访问 `/admin/**`。
+- [x] `GET /auth/me` 除 userId 和 username 外，还返回用户角色列表。
+- [x] JWT 令牌载荷包含 `roles` 声明。
+- [x] 角色数据从 `roles` 和 `user_roles` 表加载，非硬编码。
 
 ### 测试方法
 1. 创建测试用户：`alice`（STUDENT）、`bob`（INSTRUCTOR）、`charlie`（ADMIN）。
@@ -167,15 +168,15 @@
 4. 单元测试 `CustomUserDetailsService`（Mock Mapper）。
 
 ### 代码审查清单
-- [ ] 安全代码中不存在硬编码 `ROLE_USER`。
-- [ ] 角色查询使用恰当 JOIN（避免 N+1）。
-- [ ] JWT 声明中的角色字符串与 `roles.role_code` 完全匹配。
-- [ ] `SecurityConfig` 可读且按角色分组。
+- [x] 安全代码中不存在硬编码 `ROLE_USER`。
+- [x] 角色查询使用恰当 JOIN（避免 N+1）。
+- [x] JWT 声明中的角色字符串与 `roles.role_code` 完全匹配。
+- [x] `SecurityConfig` 可读且按角色分组。
 
 ### 推送条件
-- [ ] 所有基于角色的授权测试通过。
-- [ ] 现有认证流程（注册/登录/me）仍然正常。
-- [ ] `mvn clean test` 通过。
+- [x] 所有基于角色的授权测试通过。
+- [x] 现有认证流程（注册/登录/me）仍然正常。
+- [x] `mvn clean test` 通过。
 
 ---
 
@@ -876,7 +877,7 @@
 |------|--------|------|----------|
 | 0 | 项目基础与 JWT 认证 | ✅ 已完成 | 2026-03-27 |
 | 1 | 全局异常处理与输入校验 | ✅ 已完成 | 2026-06-25 |
-| 2 | RBAC（基于角色的访问控制） | ⬜ 未开始 | — |
+| 2 | RBAC（基于角色的访问控制） | ✅ 已完成 | 2026-08-17 |
 | 3 | 管理员管理模块 | ⬜ 未开始 | — |
 | 4 | 课程管理模块 | ⬜ 未开始 | — |
 | 5 | 作业管理模块 | ⬜ 未开始 | — |
