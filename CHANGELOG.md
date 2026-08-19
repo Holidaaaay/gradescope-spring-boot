@@ -1,6 +1,6 @@
 # 变更日志 / 推送记录
 
-> **状态**: 动态文档 | **最后更新**: 2026-08-17  
+> **状态**: 动态文档 | **最后更新**: 2026-08-19  
 > **用途**: 按时间顺序记录每次推送到远程仓库的操作。每条记录 documenting 实现了什么、如何实现的、关键设计决策，以及任何已知问题或回滚指令。用于追踪进度、调试回归问题、理解历史上下文。
 
 ---
@@ -729,6 +729,103 @@ git revert HEAD
 - 新注册用户默认无角色，需管理员在后台分配（未来可在注册流程默认分配 `STUDENT`）。
 - 分页仍为手动 `LIMIT/OFFSET`；M10 中可替换为 PageHelper。
 - `localStorage` JWT 存储仍是临时方案，后续里程碑中需升级。
+
+### 回滚指令
+```bash
+git revert HEAD
+```
+
+---
+
+## 推送 #10 —— 后端课程管理与作业管理模块
+
+- **日期**: 2026-08-19
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [里程碑 4：课程管理模块](MILESTONES.md#里程碑-4课程管理模块)、[里程碑 5：作业管理模块](MILESTONES.md#里程碑-5作业管理模块)
+
+### 实现了什么
+- **课程管理模块（M4）**：
+  - 创建 `Course`、`CourseMember` 实体，对应 `courses`、`course_members` 表。
+  - 创建 `CourseMapper` / `CourseMemberMapper` 及 XML，所有查询均检查 `is_deleted = 0` / `status = 1`。
+  - 创建 `CreateCourseRequestDTO`、`UpdateCourseRequestDTO`、`EnrollMemberRequestDTO` 及 `CourseVO`、`CourseDetailVO`、`CourseMemberVO`。
+  - 创建 `CourseService` / `CourseServiceImpl`：
+    - 教师创建课程时自动将自己作为 `INSTRUCTOR` 加入课程。
+    - 更新/删除课程时仅创建者或管理员可操作。
+    - `(course_code, semester)` 唯一性由数据库唯一键 + 业务层双重校验。
+    - 按角色返回课程列表：ADMIN 看全部、教师/助教看创建/参与课程、学生仅看已加入课程。
+    - 课程详情按角色返回成员列表：教师/助教看全部，学生只看自己。
+  - 创建 `CourseController`，路径为 `/courses/**`。
+- **作业管理模块（M5）**：
+  - 创建 `Assignment`、`AssignmentFile` 实体，对应 `assignments`、`assignment_files` 表。
+  - 创建 `AssignmentMapper` / `AssignmentFileMapper` 及 XML。
+  - 创建 `CreateAssignmentRequestDTO`、`UpdateAssignmentRequestDTO`、`CreateAssignmentFileRequestDTO` 及 `AssignmentVO`、`AssignmentDetailVO`、`AssignmentFileVO`。
+  - 创建 `AssignmentService` / `AssignmentServiceImpl`：
+    - `createAssignment` 仅允许课程 `INSTRUCTOR` / `TA` 或 `ADMIN`，默认状态为草稿（0）。
+    - `updateAssignment` 仅在草稿状态或截止时间前允许修改；已关闭（2）或截止后已发布（1）禁止修改。
+    - `publishAssignment` / `closeAssignment` 控制状态转换：草稿 → 已发布 → 已关闭。
+    - `listAssignmentsByCourse` 学生仅见已发布作业；教师/助教/管理员见全部。
+    - `getAssignmentDetail` 带文件附件，非成员禁止访问，学生只能看已发布作业。
+    - 作业文件附件端点占位实现：`POST /.../files`、`GET /.../files`。
+  - 创建 `AssignmentController`，路径为 `/courses/{courseId}/assignments` 嵌套资源。
+- 更新 `SecurityConfig` 保持嵌套作业端点走 Service 层鉴权，继续由 `anyRequest().authenticated()` 兜底。
+
+### 实现细节
+- 作业截止时间统一按 UTC 比较：Service 中使用 `LocalDateTime.now(ZoneOffset.UTC)` 与 `dueTime` 比较。
+- 课程/作业成员权限校验复用 `courseMemberMapper.selectByCourseIdAndUserId`，仅 `status = 1` 的成员被视为有效。
+- 角色判断同时依赖全局角色（`ADMIN`）和课程内角色（`INSTRUCTOR` / `TA`）。
+- DTO 校验：
+  - 创建作业要求 `title`、`totalScore`、`dueTime`、`allowLateSubmission`、`maxSubmissionTimes` 必填。
+  - `totalScore` 范围 `0.01 ~ 9999.99`，`maxSubmissionTimes` 范围 `1 ~ 100`。
+  - `dueTime` 使用 `yyyy-MM-dd'T'HH:mm:ss` 格式。
+
+### 新增 / 修改 / 删除的文件
+- **新增**:
+  - `src/main/java/com/example/gradescopespringboot/entity/Course.java`
+  - `src/main/java/com/example/gradescopespringboot/entity/CourseMember.java`
+  - `src/main/java/com/example/gradescopespringboot/mapper/CourseMapper.java`
+  - `src/main/resources/mapper/CourseMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/mapper/CourseMemberMapper.java`
+  - `src/main/resources/mapper/CourseMemberMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/service/CourseService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/CourseServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/CourseController.java`
+  - `src/main/java/com/example/gradescopespringboot/dto/course/*`
+  - `src/main/java/com/example/gradescopespringboot/vo/course/*`
+  - `src/test/java/com/example/gradescopespringboot/CourseControllerIntegrationTest.java`
+  - `src/main/java/com/example/gradescopespringboot/entity/Assignment.java`
+  - `src/main/java/com/example/gradescopespringboot/entity/AssignmentFile.java`
+  - `src/main/java/com/example/gradescopespringboot/mapper/AssignmentMapper.java`
+  - `src/main/resources/mapper/AssignmentMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/mapper/AssignmentFileMapper.java`
+  - `src/main/resources/mapper/AssignmentFileMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/service/AssignmentService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/AssignmentServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/AssignmentController.java`
+  - `src/main/java/com/example/gradescopespringboot/dto/assignment/*`
+  - `src/main/java/com/example/gradescopespringboot/vo/assignment/*`
+  - `src/test/java/com/example/gradescopespringboot/AssignmentControllerIntegrationTest.java`
+- **修改**:
+  - `MILESTONES.md`（M4、M5 标记完成）
+  - `CHANGELOG.md`（本记录）
+- **删除**: （无）
+
+### 执行的测试
+- `mvn clean test`：33 个测试全部通过。
+  - `GlobalExceptionHandlerTest`（5）
+  - `GradescopeSpringBootApplicationTests`（1）
+  - `UserMapperTest`（1）
+  - `RbacIntegrationTest`（4）
+  - `CustomUserDetailsServiceTest`（1）
+  - `AdminControllerIntegrationTest`（6）
+  - `CourseControllerIntegrationTest`（7）
+  - `AssignmentControllerIntegrationTest`（8）
+- `cd gradescope-frontend && npm run build`：构建成功，无 TypeScript/Vue 编译错误。
+
+### 已知问题 / 限制
+- 作业文件上传端点当前仅保存元数据（`file_url` 由调用方提供），实际 Multipart 文件上传、本地存储、白名单校验将在里程碑 7 中实现。
+- 作业列表尚未分页，将在里程碑 10 中统一引入 PageHelper。
+- `localStorage` JWT 存储仍是临时方案，后续里程碑中需升级为更安全的存储方案。
 
 ### 回滚指令
 ```bash

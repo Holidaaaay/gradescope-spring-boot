@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gradescopespringboot.mapper.CourseMemberMapper">
+
+    <select id="selectByCourseIdAndUserId" resultType="com.example.gradescopespringboot.entity.CourseMember">
+        SELECT
+            id,
+            course_id,
+            user_id,
+            course_role,
+            joined_at,
+            status,
+            created_at,
+            updated_at
+        FROM course_members
+        WHERE course_id = #{courseId}
+          AND user_id = #{userId}
+          AND status = 1
+    </select>
+
+    <select id="selectByCourseId" resultType="com.example.gradescopespringboot.entity.CourseMember">
+        SELECT
+            id,
+            course_id,
+            user_id,
+            course_role,
+            joined_at,
+            status,
+            created_at,
+            updated_at
+        FROM course_members
+        WHERE course_id = #{courseId}
+          AND status = 1
+        ORDER BY course_role, joined_at
+    </select>
+
+    <select id="selectMembersByCourseId" resultType="com.example.gradescopespringboot.vo.course.CourseMemberVO">
+        SELECT
+            cm.id,
+            cm.user_id,
+            u.username,
+            u.real_name,
+            cm.course_role,
+            cm.joined_at
+        FROM course_members cm
+        JOIN users u ON u.id = cm.user_id
+        WHERE cm.course_id = #{courseId}
+          AND cm.status = 1
+        ORDER BY cm.course_role, cm.joined_at
+    </select>
+
+    <insert id="insert"
+            parameterType="com.example.gradescopespringboot.entity.CourseMember"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO course_members (
+            course_id,
+            user_id,
+            course_role,
+            status
+        ) VALUES (
+            #{courseId},
+            #{userId},
+            #{courseRole},
+            #{status}
+        )
+    </insert>
+
+    <update id="updateStatusByCourseIdAndUserId">
+        UPDATE course_members
+        SET status = #{status}
+        WHERE course_id = #{courseId}
+          AND user_id = #{userId}
+    </update>
+
+</mapper>

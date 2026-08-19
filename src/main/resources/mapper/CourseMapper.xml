@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gradescopespringboot.mapper.CourseMapper">
+
+    <select id="selectById" resultType="com.example.gradescopespringboot.entity.Course">
+        SELECT
+            id,
+            course_code,
+            course_name,
+            semester,
+            description,
+            location,
+            schedule_info,
+            status,
+            created_by,
+            updated_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM courses
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </select>
+
+    <select id="selectByCodeAndSemester" resultType="com.example.gradescopespringboot.entity.Course">
+        SELECT
+            id,
+            course_code,
+            course_name,
+            semester,
+            description,
+            location,
+            schedule_info,
+            status,
+            created_by,
+            updated_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM courses
+        WHERE course_code = #{courseCode}
+          AND semester = #{semester}
+          AND is_deleted = 0
+    </select>
+
+    <insert id="insert"
+            parameterType="com.example.gradescopespringboot.entity.Course"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO courses (
+            course_code,
+            course_name,
+            semester,
+            description,
+            location,
+            schedule_info,
+            status,
+            created_by,
+            updated_by
+        ) VALUES (
+            #{courseCode},
+            #{courseName},
+            #{semester},
+            #{description},
+            #{location},
+            #{scheduleInfo},
+            #{status},
+            #{createdBy},
+            #{updatedBy}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.gradescopespringboot.entity.Course">
+        UPDATE courses
+        SET course_code = #{courseCode},
+            course_name = #{courseName},
+            semester = #{semester},
+            description = #{description},
+            location = #{location},
+            schedule_info = #{scheduleInfo},
+            status = #{status},
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteById">
+        UPDATE courses
+        SET is_deleted = 1,
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <select id="selectByCreatedBy" resultType="com.example.gradescopespringboot.entity.Course">
+        SELECT
+            id,
+            course_code,
+            course_name,
+            semester,
+            description,
+            location,
+            schedule_info,
+            status,
+            created_by,
+            updated_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM courses
+        WHERE created_by = #{createdBy}
+          AND is_deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByMemberUserId" resultType="com.example.gradescopespringboot.entity.Course">
+        SELECT
+            c.id,
+            c.course_code,
+            c.course_name,
+            c.semester,
+            c.description,
+            c.location,
+            c.schedule_info,
+            c.status,
+            c.created_by,
+            c.updated_by,
+            c.created_at,
+            c.updated_at,
+            c.is_deleted
+        FROM courses c
+        JOIN course_members cm ON cm.course_id = c.id
+        WHERE cm.user_id = #{userId}
+          AND cm.status = 1
+          AND c.is_deleted = 0
+        ORDER BY c.created_at DESC
+    </select>
+
+    <select id="selectAllActive" resultType="com.example.gradescopespringboot.entity.Course">
+        SELECT
+            id,
+            course_code,
+            course_name,
+            semester,
+            description,
+            location,
+            schedule_info,
+            status,
+            created_by,
+            updated_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM courses
+        WHERE is_deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

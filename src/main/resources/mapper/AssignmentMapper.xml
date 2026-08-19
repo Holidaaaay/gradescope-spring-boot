@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gradescopespringboot.mapper.AssignmentMapper">
+
+    <select id="selectById" resultType="com.example.gradescopespringboot.entity.Assignment">
+        SELECT
+            id,
+            course_id,
+            title,
+            description,
+            total_score,
+            due_time,
+            allow_late_submission,
+            max_submission_times,
+            status,
+            created_by,
+            updated_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM assignments
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </select>
+
+    <select id="selectByIdAndCourseId" resultType="com.example.gradescopespringboot.entity.Assignment">
+        SELECT
+            id,
+            course_id,
+            title,
+            description,
+            total_score,
+            due_time,
+            allow_late_submission,
+            max_submission_times,
+            status,
+            created_by,
+            updated_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM assignments
+        WHERE id = #{id}
+          AND course_id = #{courseId}
+          AND is_deleted = 0
+    </select>
+
+    <select id="selectByCourseId" resultType="com.example.gradescopespringboot.entity.Assignment">
+        SELECT
+            id,
+            course_id,
+            title,
+            description,
+            total_score,
+            due_time,
+            allow_late_submission,
+            max_submission_times,
+            status,
+            created_by,
+            updated_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM assignments
+        WHERE course_id = #{courseId}
+          AND is_deleted = 0
+        ORDER BY due_time ASC
+    </select>
+
+    <select id="selectPublishedByCourseId" resultType="com.example.gradescopespringboot.entity.Assignment">
+        SELECT
+            id,
+            course_id,
+            title,
+            description,
+            total_score,
+            due_time,
+            allow_late_submission,
+            max_submission_times,
+            status,
+            created_by,
+            updated_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM assignments
+        WHERE course_id = #{courseId}
+          AND status = 1
+          AND is_deleted = 0
+        ORDER BY due_time ASC
+    </select>
+
+    <insert id="insert"
+            parameterType="com.example.gradescopespringboot.entity.Assignment"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO assignments (
+            course_id,
+            title,
+            description,
+            total_score,
+            due_time,
+            allow_late_submission,
+            max_submission_times,
+            status,
+            created_by,
+            updated_by
+        ) VALUES (
+            #{courseId},
+            #{title},
+            #{description},
+            #{totalScore},
+            #{dueTime},
+            #{allowLateSubmission},
+            #{maxSubmissionTimes},
+            #{status},
+            #{createdBy},
+            #{updatedBy}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.gradescopespringboot.entity.Assignment">
+        UPDATE assignments
+        SET title = #{title},
+            description = #{description},
+            total_score = #{totalScore},
+            due_time = #{dueTime},
+            allow_late_submission = #{allowLateSubmission},
+            max_submission_times = #{maxSubmissionTimes},
+            status = #{status},
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteById">
+        UPDATE assignments
+        SET is_deleted = 1,
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+</mapper>

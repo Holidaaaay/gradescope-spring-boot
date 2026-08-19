@@ -1,6 +1,6 @@
 # 项目里程碑与任务拆解
 
-> **状态**: 动态文档 | **最后更新**: 2026-06-25  
+> **状态**: 动态文档 | **最后更新**: 2026-08-19  
 > **用途**: 本文档将整个项目拆分为可验证的里程碑。每个里程碑包含子任务、明确的验收标准、测试说明和代码审查清单。**在完成当前里程碑的所有验收标准、测试、审查并推送到远程仓库之前，禁止进入下一个里程碑。**
 
 ---
@@ -224,26 +224,27 @@
 
 ## 里程碑 4：课程管理模块
 
-**状态**: `[ ]` **未开始**  
+**状态**: `[x]` **已完成**  
 **依赖**: 里程碑 3  
-**预估工作量**: 中（2-3 个会话）
+**预估工作量**: 中（2-3 个会话）  
+**完成日期**: 2026-08-19
 
 ### 目标
 课程的完整增删改查、选课管理及按角色范围划分的列表查询。
 
 ### 子任务
-1. [ ] **创建 `Course` 实体**，对应 `courses` 表。
-2. [ ] **创建 `CourseMember` 实体**，对应 `course_members` 表。
-3. [ ] **创建 Mapper**: `CourseMapper.xml`、`CourseMemberMapper.xml`。
-4. [ ] **创建 DTO**: `CreateCourseRequestDTO`、`UpdateCourseRequestDTO`、`EnrollMemberRequestDTO`。
-5. [ ] **创建 VO**: `CourseVO`、`CourseDetailVO`、`CourseMemberVO`。
-6. [ ] **创建 `CourseService` / `CourseServiceImpl`**:
-   - `createCourse`: 仅教师可用。设置 `created_by` 为当前用户。
-   - `updateCourse`: 仅限创建者或管理员。
-   - `deleteCourse`: 逻辑删除。
-   - `listCourses`: 按角色区分的查询（见需求）。
-   - `getCourseDetail`: 带成员列表。
-7. [ ] **创建 `CourseController`**:
+1. [x] **创建 `Course` 实体**，对应 `courses` 表。
+2. [x] **创建 `CourseMember` 实体**，对应 `course_members` 表。
+3. [x] **创建 Mapper**: `CourseMapper.xml`、`CourseMemberMapper.xml`。
+4. [x] **创建 DTO**: `CreateCourseRequestDTO`、`UpdateCourseRequestDTO`、`EnrollMemberRequestDTO`。
+5. [x] **创建 VO**: `CourseVO`、`CourseDetailVO`、`CourseMemberVO`。
+6. [x] **创建 `CourseService` / `CourseServiceImpl`**:
+   - [x] `createCourse`: 仅教师可用。设置 `created_by` 为当前用户。
+   - [x] `updateCourse`: 仅限创建者或管理员。
+   - [x] `deleteCourse`: 逻辑删除。
+   - [x] `listCourses`: 按角色区分的查询（见需求）。
+   - [x] `getCourseDetail`: 带成员列表。
+7. [x] **创建 `CourseController`**:
    - `POST /courses`
    - `GET /courses`
    - `GET /courses/{id}`
@@ -251,14 +252,14 @@
    - `DELETE /courses/{id}`
    - `POST /courses/{id}/members`（添加成员）
    - `DELETE /courses/{id}/members/{userId}`（移除成员）
-8. [ ] **Service 层权限检查**: 允许修改前校验当前用户是否为课程教师/管理员。
+8. [x] **Service 层权限检查**: 允许修改前校验当前用户是否为课程教师/管理员。
 
 ### 验收标准
-- [ ] 教师可以创建课程并隐式成为成员。
-- [ ] `(course_code, semester)` 唯一性受约束（数据库 + 业务检查）。
-- [ ] 学生调用 `POST /courses` 收到 403。
-- [ ] 已选课学生在 `GET /courses` 中可见该课程；未选课用户不可见。
-- [ ] `GET /courses/{id}` 对教师包含成员列表；对学生仅显示自己。
+- [x] 教师可以创建课程并隐式成为成员。
+- [x] `(course_code, semester)` 唯一性受约束（数据库 + 业务检查）。
+- [x] 学生调用 `POST /courses` 收到 403。
+- [x] 已选课学生在 `GET /courses` 中可见该课程；未选课用户不可见。
+- [x] `GET /courses/{id}` 对教师包含成员列表；对学生仅显示自己。
 
 ### 测试方法
 1. 集成测试:
@@ -270,68 +271,69 @@
    - 非成员尝试查看课程 → 403。
 
 ### 代码审查清单
-- [ ] 所有查询检查逻辑删除（`is_deleted = 0`）。
-- [ ] `created_by` 和 `updated_by` 从 JWT 获取，而非请求体。
-- [ ] 添加成员前检查用户是否存在。
-- [ ] 获取课程及成员时无 N+1 查询问题（使用 JOIN 或嵌套 resultMap）。
+- [x] 所有查询检查逻辑删除（`is_deleted = 0`）。
+- [x] `created_by` 和 `updated_by` 从 JWT 获取，而非请求体。
+- [x] 添加成员前检查用户是否存在。
+- [x] 获取课程及成员时无 N+1 查询问题（使用 JOIN 或嵌套 resultMap）。
 
 ### 推送条件
-- [ ] 所有增删改查端点通过集成测试。
-- [ ] 每个端点已验证基于角色的访问控制。
-- [ ] `mvn clean test` 通过。
+- [x] 所有增删改查端点通过集成测试。
+- [x] 每个端点已验证基于角色的访问控制。
+- [x] `mvn clean test` 通过。
 
 ---
 
 ## 里程碑 5：作业管理模块
 
-**状态**: `[ ]` **未开始**  
+**状态**: `[x]` **已完成**  
 **依赖**: 里程碑 4  
-**预估工作量**: 中（2-3 个会话）
+**预估工作量**: 中（2-3 个会话）  
+**完成日期**: 2026-08-19
 
 ### 目标
 教师可在课程内发布作业，学生可查看已发布作业。
 
 ### 子任务
-1. [ ] **创建 `Assignment` 实体**。
-2. [ ] **创建 `AssignmentFile` 实体**。
-3. [ ] **创建 Mapper**: `AssignmentMapper.xml`、`AssignmentFileMapper.xml`。
-4. [ ] **创建 DTO**: `CreateAssignmentRequestDTO`、`UpdateAssignmentRequestDTO`。
-5. [ ] **创建 VO**: `AssignmentVO`、`AssignmentDetailVO`。
-6. [ ] **创建 `AssignmentService` / `AssignmentServiceImpl`**:
-   - `createAssignment`: 仅限其课程的教师/助教。
-   - `updateAssignment`: 仅在截止前或草稿状态时允许。
-   - `publishAssignment`: 状态从草稿(0)变为已发布(1)。
-   - `closeAssignment`: 状态变为已关闭(2)。
-   - `listAssignmentsByCourse`: 学生仅见已发布；教师见全部。
-   - `getAssignmentDetail`: 带文件附件。
-7. [ ] **创建 `AssignmentController`**，路径为 `/courses/{courseId}/assignments`（嵌套资源）。
-8. [ ] **作业文件附件端点**（占位；完整上传在里程碑 7）:
-   - `POST /courses/{courseId}/assignments/{assignmentId}/files`
-   - `GET /courses/{courseId}/assignments/{assignmentId}/files`
+1. [x] **创建 `Assignment` 实体**。
+2. [x] **创建 `AssignmentFile` 实体**。
+3. [x] **创建 Mapper**: `AssignmentMapper.xml`、`AssignmentFileMapper.xml`。
+4. [x] **创建 DTO**: `CreateAssignmentRequestDTO`、`UpdateAssignmentRequestDTO`、`CreateAssignmentFileRequestDTO`。
+5. [x] **创建 VO**: `AssignmentVO`、`AssignmentDetailVO`、`AssignmentFileVO`。
+6. [x] **创建 `AssignmentService` / `AssignmentServiceImpl`**:
+   - [x] `createAssignment`: 仅限其课程的教师/助教。
+   - [x] `updateAssignment`: 仅在截止前或草稿状态时允许。
+   - [x] `publishAssignment`: 状态从草稿(0)变为已发布(1)。
+   - [x] `closeAssignment`: 状态变为已关闭(2)。
+   - [x] `listAssignmentsByCourse`: 学生仅见已发布；教师见全部。
+   - [x] `getAssignmentDetail`: 带文件附件。
+7. [x] **创建 `AssignmentController`**，路径为 `/courses/{courseId}/assignments`（嵌套资源）。
+8. [x] **作业文件附件端点**（占位；完整上传在里程碑 7）:
+   - [x] `POST /courses/{courseId}/assignments/{assignmentId}/files`
+   - [x] `GET /courses/{courseId}/assignments/{assignmentId}/files`
 
 ### 验收标准
-- [ ] 教师可在拥有的课程中创建作业。
-- [ ] 学生仅在状态 = 1（已发布）后可见作业。
-- [ ] 草稿作业对学生不可见。
-- [ ] 作业截止时间受强制执行（统一存储为 UTC 或本地时间）。
-- [ ] 作业列表限定于课程（校验 course ID）。
+- [x] 教师可在拥有的课程中创建作业。
+- [x] 学生仅在状态 = 1（已发布）后可见作业。
+- [x] 草稿作业对学生不可见。
+- [x] 作业截止时间受强制执行（统一存储为 UTC 或本地时间）。
+- [x] 作业列表限定于课程（校验 course ID）。
 
 ### 测试方法
-1. 增删改查集成测试。
-2. 状态转换测试：草稿 → 已发布 → 已关闭。
-3. 安全测试：学生尝试创建作业 → 403。
-4. 验证 `course_id` 外键约束行为。
+1. [x] 增删改查集成测试。
+2. [x] 状态转换测试：草稿 → 已发布 → 已关闭。
+3. [x] 安全测试：学生尝试创建作业 → 403。
+4. [x] 验证 `course_id` 外键约束行为。
 
 ### 代码审查清单
-- [ ] `created_by` 从 JWT 获取，非请求体。
-- [ ] `due_time` 格式已记录且一致（推荐 ISO 8601）。
-- [ ] 嵌套 URL 路径正确映射课程-作业关系。
-- [ ] 应用逻辑删除。
+- [x] `created_by` 从 JWT 获取，非请求体。
+- [x] `due_time` 格式已记录且一致（推荐 ISO 8601）。
+- [x] 嵌套 URL 路径正确映射课程-作业关系。
+- [x] 应用逻辑删除。
 
 ### 推送条件
-- [ ] 作业生命周期（创建、发布、关闭）已测试。
-- [ ] 基于角色的可见性已测试。
-- [ ] `mvn clean test` 通过。
+- [x] 作业生命周期（创建、发布、关闭）已测试。
+- [x] 基于角色的可见性已测试。
+- [x] `mvn clean test` 通过。
 
 ---
 
@@ -880,8 +882,8 @@
 | 1 | 全局异常处理与输入校验 | ✅ 已完成 | 2026-06-25 |
 | 2 | RBAC（基于角色的访问控制） | ✅ 已完成 | 2026-08-17 |
 | 3 | 管理员管理模块 | ✅ 已完成 | 2026-08-17 |
-| 4 | 课程管理模块 | ⬜ 未开始 | — |
-| 5 | 作业管理模块 | ⬜ 未开始 | — |
+| 4 | 课程管理模块 | ✅ 已完成 | 2026-08-19 |
+| 5 | 作业管理模块 | ✅ 已完成 | 2026-08-19 |
 | 6 | 学生提交模块 | ⬜ 未开始 | — |
 | 7 | 文件上传与存储 | ⬜ 未开始 | — |
 | 8 | 评分与反馈模块 | ⬜ 未开始 | — |
@@ -893,14 +895,6 @@
 | F4 | 评分页面与成绩统计 | ⬜ 未开始 | — |
 | F5 | 管理员后台与课程资料 | ⬜ 未开始 | — |
 | F6 | 全局优化与部署准备 | ⬜ 未开始 | — |
-| 3 | 管理员管理模块 | ✅ 已完成 | 2026-08-17 |
-| 4 | 课程管理模块 | ⬜ 未开始 | — |
-| 5 | 作业管理模块 | ⬜ 未开始 | — |
-| 6 | 学生提交模块 | ⬜ 未开始 | — |
-| 7 | 文件上传与存储 | ⬜ 未开始 | — |
-| 8 | 评分与反馈模块 | ⬜ 未开始 | — |
-| 9 | 课程资料模块 | ⬜ 未开始 | — |
-| 10 | 分页、缓存与打磨 | ⬜ 未开始 | — |
 
 ---
 

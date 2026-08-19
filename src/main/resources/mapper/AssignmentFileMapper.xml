@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gradescopespringboot.mapper.AssignmentFileMapper">
+
+    <select id="selectById" resultType="com.example.gradescopespringboot.entity.AssignmentFile">
+        SELECT
+            id,
+            assignment_id,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            uploaded_by,
+            created_at
+        FROM assignment_files
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByAssignmentId" resultType="com.example.gradescopespringboot.entity.AssignmentFile">
+        SELECT
+            id,
+            assignment_id,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            uploaded_by,
+            created_at
+        FROM assignment_files
+        WHERE assignment_id = #{assignmentId}
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert"
+            parameterType="com.example.gradescopespringboot.entity.AssignmentFile"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO assignment_files (
+            assignment_id,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            uploaded_by
+        ) VALUES (
+            #{assignmentId},
+            #{fileName},
+            #{fileUrl},
+            #{fileSize},
+            #{fileType},
+            #{uploadedBy}
+        )
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM assignment_files
+        WHERE id = #{id}
+    </delete>
+
+</mapper>
