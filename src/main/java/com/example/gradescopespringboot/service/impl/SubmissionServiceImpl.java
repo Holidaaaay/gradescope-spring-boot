@@ -3,20 +3,24 @@ package com.example.gradescopespringboot.service.impl;
 import com.example.gradescopespringboot.common.exception.BusinessException;
 import com.example.gradescopespringboot.common.exception.ResourceNotFoundException;
 import com.example.gradescopespringboot.common.exception.ResultCode;
+import com.example.gradescopespringboot.common.util.FileUtil;
 import com.example.gradescopespringboot.dto.submission.CreateSubmissionRequestDTO;
 import com.example.gradescopespringboot.entity.Assignment;
 import com.example.gradescopespringboot.entity.Submission;
+import com.example.gradescopespringboot.entity.SubmissionFile;
 import com.example.gradescopespringboot.mapper.AssignmentMapper;
 import com.example.gradescopespringboot.mapper.CourseMapper;
 import com.example.gradescopespringboot.mapper.CourseMemberMapper;
 import com.example.gradescopespringboot.mapper.SubmissionFileMapper;
 import com.example.gradescopespringboot.mapper.SubmissionMapper;
+import com.example.gradescopespringboot.service.FileStorageService;
 import com.example.gradescopespringboot.service.SubmissionService;
 import com.example.gradescopespringboot.vo.submission.SubmissionDetailVO;
 import com.example.gradescopespringboot.vo.submission.SubmissionFileVO;
 import com.example.gradescopespringboot.vo.submission.SubmissionVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,17 +34,20 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final AssignmentMapper assignmentMapper;
     private final SubmissionMapper submissionMapper;
     private final SubmissionFileMapper submissionFileMapper;
+    private final FileStorageService fileStorageService;
 
     public SubmissionServiceImpl(CourseMapper courseMapper,
                                  CourseMemberMapper courseMemberMapper,
                                  AssignmentMapper assignmentMapper,
                                  SubmissionMapper submissionMapper,
-                                 SubmissionFileMapper submissionFileMapper) {
+                                 SubmissionFileMapper submissionFileMapper,
+                                 FileStorageService fileStorageService) {
         this.courseMapper = courseMapper;
         this.courseMemberMapper = courseMemberMapper;
         this.assignmentMapper = assignmentMapper;
         this.submissionMapper = submissionMapper;
         this.submissionFileMapper = submissionFileMapper;
+        this.fileStorageService = fileStorageService;
     }
 
     @Override
@@ -145,6 +152,32 @@ public class SubmissionServiceImpl implements SubmissionService {
                 .toList();
         detail.setFiles(files);
         return detail;
+    }
+
+    @Override
+    @Transactional
+    public SubmissionFileVO addSubmissionFile(Long courseId, Long assignmentId, Long submissionId,
+                                              MultipartFile file, Long userId, List<String> roles) {
+        checkCourseMember(courseId, userId, roles);
+
+        Submission submission = submissionMapper.selectByIdAndAssignmentId(submissionId, assignmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Submission not found: " + submissionId));
+
+        if (!roles.contains("ADMIN") && !submission.getStudentId().equals(userId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "You can only upload files to your own submissions");
+        }
+
+        String fileUrl = fileStorageService.storeFile(file, "submission");
+
+        SubmissionFile submissionFile = new SubmissionFile();
+        submissionFile.setSubmissionId(submissionId);
+        submissionFile.setFileName(FileUtil.sanitizeFileName(file.getOriginalFilename()));
+        submissionFile.setFileUrl(fileUrl);
+        submissionFile.setFileSize(file.getSize());
+        submissionFile.setFileType(FileUtil.getExtension(file.getOriginalFilename()));
+
+        submissionFileMapper.insert(submissionFile);
+        return toSubmissionFileVO(submissionFile);
     }
 
     private void checkCourseMember(Long courseId, Long userId, List<String> roles) {

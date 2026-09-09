@@ -2,6 +2,7 @@ package com.example.gradescopespringboot.mapper;
 
 import com.example.gradescopespringboot.entity.AssignmentFile;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +11,8 @@ import java.util.Optional;
 public interface AssignmentFileMapper {
 
     Optional<AssignmentFile> selectById(Long id);
+
+    Optional<AssignmentFile> selectByFileUrl(@Param("fileUrl") String fileUrl);
 
     List<AssignmentFile> selectByAssignmentId(Long assignmentId);
 

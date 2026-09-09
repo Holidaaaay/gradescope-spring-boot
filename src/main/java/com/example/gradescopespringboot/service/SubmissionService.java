@@ -2,7 +2,9 @@ package com.example.gradescopespringboot.service;
 
 import com.example.gradescopespringboot.dto.submission.CreateSubmissionRequestDTO;
 import com.example.gradescopespringboot.vo.submission.SubmissionDetailVO;
+import com.example.gradescopespringboot.vo.submission.SubmissionFileVO;
 import com.example.gradescopespringboot.vo.submission.SubmissionVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -57,4 +59,18 @@ public interface SubmissionService {
      */
     SubmissionDetailVO getSubmissionDetail(Long courseId, Long assignmentId, Long submissionId,
                                            Long userId, List<String> roles);
+
+    /**
+     * Upload a file for a submission. Only the submission owner can upload.
+     *
+     * @param courseId     course id
+     * @param assignmentId assignment id
+     * @param submissionId submission id
+     * @param file         multipart file
+     * @param userId       student user id
+     * @param roles        user global roles
+     * @return created file record
+     */
+    SubmissionFileVO addSubmissionFile(Long courseId, Long assignmentId, Long submissionId,
+                                       MultipartFile file, Long userId, List<String> roles);
 }

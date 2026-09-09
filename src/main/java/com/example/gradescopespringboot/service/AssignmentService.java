@@ -1,11 +1,11 @@
 package com.example.gradescopespringboot.service;
 
-import com.example.gradescopespringboot.dto.assignment.CreateAssignmentFileRequestDTO;
 import com.example.gradescopespringboot.dto.assignment.CreateAssignmentRequestDTO;
 import com.example.gradescopespringboot.dto.assignment.UpdateAssignmentRequestDTO;
 import com.example.gradescopespringboot.vo.assignment.AssignmentDetailVO;
 import com.example.gradescopespringboot.vo.assignment.AssignmentFileVO;
 import com.example.gradescopespringboot.vo.assignment.AssignmentVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -87,16 +87,16 @@ public interface AssignmentService {
     AssignmentDetailVO getAssignmentDetail(Long courseId, Long assignmentId, Long userId, List<String> roles);
 
     /**
-     * Add a placeholder file record to an assignment.
+     * Upload and attach a file to an assignment.
      *
      * @param courseId     course id
      * @param assignmentId assignment id
-     * @param dto          file metadata
+     * @param file         multipart file
      * @param userId       operator user id
      * @param roles        operator global roles
      * @return created file record
      */
-    AssignmentFileVO addAssignmentFile(Long courseId, Long assignmentId, CreateAssignmentFileRequestDTO dto,
+    AssignmentFileVO addAssignmentFile(Long courseId, Long assignmentId, MultipartFile file,
                                        Long userId, List<String> roles);
 
     /**

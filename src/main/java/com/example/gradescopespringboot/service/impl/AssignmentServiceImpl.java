@@ -3,7 +3,7 @@ package com.example.gradescopespringboot.service.impl;
 import com.example.gradescopespringboot.common.exception.BusinessException;
 import com.example.gradescopespringboot.common.exception.ResourceNotFoundException;
 import com.example.gradescopespringboot.common.exception.ResultCode;
-import com.example.gradescopespringboot.dto.assignment.CreateAssignmentFileRequestDTO;
+import com.example.gradescopespringboot.common.util.FileUtil;
 import com.example.gradescopespringboot.dto.assignment.CreateAssignmentRequestDTO;
 import com.example.gradescopespringboot.dto.assignment.UpdateAssignmentRequestDTO;
 import com.example.gradescopespringboot.entity.Assignment;
@@ -15,11 +15,13 @@ import com.example.gradescopespringboot.mapper.AssignmentMapper;
 import com.example.gradescopespringboot.mapper.CourseMapper;
 import com.example.gradescopespringboot.mapper.CourseMemberMapper;
 import com.example.gradescopespringboot.service.AssignmentService;
+import com.example.gradescopespringboot.service.FileStorageService;
 import com.example.gradescopespringboot.vo.assignment.AssignmentDetailVO;
 import com.example.gradescopespringboot.vo.assignment.AssignmentFileVO;
 import com.example.gradescopespringboot.vo.assignment.AssignmentVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,15 +33,18 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final CourseMemberMapper courseMemberMapper;
     private final AssignmentMapper assignmentMapper;
     private final AssignmentFileMapper assignmentFileMapper;
+    private final FileStorageService fileStorageService;
 
     public AssignmentServiceImpl(CourseMapper courseMapper,
                                  CourseMemberMapper courseMemberMapper,
                                  AssignmentMapper assignmentMapper,
-                                 AssignmentFileMapper assignmentFileMapper) {
+                                 AssignmentFileMapper assignmentFileMapper,
+                                 FileStorageService fileStorageService) {
         this.courseMapper = courseMapper;
         this.courseMemberMapper = courseMemberMapper;
         this.assignmentMapper = assignmentMapper;
         this.assignmentFileMapper = assignmentFileMapper;
+        this.fileStorageService = fileStorageService;
     }
 
     @Override
@@ -194,7 +199,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     @Transactional
-    public AssignmentFileVO addAssignmentFile(Long courseId, Long assignmentId, CreateAssignmentFileRequestDTO dto,
+    public AssignmentFileVO addAssignmentFile(Long courseId, Long assignmentId, MultipartFile file,
                                               Long userId, List<String> roles) {
         Course course = checkCourseExists(courseId);
         checkCourseStaff(course, userId, roles, "add assignment file");
@@ -206,16 +211,18 @@ public class AssignmentServiceImpl implements AssignmentService {
             throw new BusinessException(ResultCode.FORBIDDEN, "Cannot add files to a closed assignment");
         }
 
-        AssignmentFile file = new AssignmentFile();
-        file.setAssignmentId(assignmentId);
-        file.setFileName(dto.getFileName());
-        file.setFileUrl(dto.getFileUrl());
-        file.setFileSize(dto.getFileSize());
-        file.setFileType(dto.getFileType());
-        file.setUploadedBy(userId);
+        String fileUrl = fileStorageService.storeFile(file, "assignment");
 
-        assignmentFileMapper.insert(file);
-        return toAssignmentFileVO(file);
+        AssignmentFile assignmentFile = new AssignmentFile();
+        assignmentFile.setAssignmentId(assignmentId);
+        assignmentFile.setFileName(FileUtil.sanitizeFileName(file.getOriginalFilename()));
+        assignmentFile.setFileUrl(fileUrl);
+        assignmentFile.setFileSize(file.getSize());
+        assignmentFile.setFileType(FileUtil.getExtension(file.getOriginalFilename()));
+        assignmentFile.setUploadedBy(userId);
+
+        assignmentFileMapper.insert(assignmentFile);
+        return toAssignmentFileVO(assignmentFile);
     }
 
     @Override

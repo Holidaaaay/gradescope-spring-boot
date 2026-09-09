@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gradescopespringboot.mapper.CourseMaterialMapper">
+
+    <select id="selectById" resultType="com.example.gradescopespringboot.entity.CourseMaterial">
+        SELECT
+            id,
+            course_id,
+            title,
+            description,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            uploaded_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM course_materials
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </select>
+
+    <select id="selectByFileUrl" resultType="com.example.gradescopespringboot.entity.CourseMaterial">
+        SELECT
+            id,
+            course_id,
+            title,
+            description,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            uploaded_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM course_materials
+        WHERE file_url = #{fileUrl}
+          AND is_deleted = 0
+    </select>
+
+    <select id="selectByCourseId" resultType="com.example.gradescopespringboot.entity.CourseMaterial">
+        SELECT
+            id,
+            course_id,
+            title,
+            description,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            uploaded_by,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM course_materials
+        WHERE course_id = #{courseId}
+          AND is_deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert"
+            parameterType="com.example.gradescopespringboot.entity.CourseMaterial"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO course_materials (
+            course_id,
+            title,
+            description,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            uploaded_by
+        ) VALUES (
+            #{courseId},
+            #{title},
+            #{description},
+            #{fileName},
+            #{fileUrl},
+            #{fileSize},
+            #{fileType},
+            #{uploadedBy}
+        )
+    </insert>
+
+    <update id="deleteById">
+        UPDATE course_materials
+        SET is_deleted = 1
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+</mapper>

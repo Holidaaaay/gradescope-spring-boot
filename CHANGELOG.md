@@ -906,4 +906,97 @@ git revert HEAD
 
 ---
 
+## 推送 #12 —— 后端文件上传与存储
+
+- **日期**: 2026-08-19
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [里程碑 7：文件上传与存储](MILESTONES.md#里程碑-7文件上传与存储)
+
+### 实现了什么
+- 在 `application.properties` 中配置 multipart 上传限制：`max-file-size=10MB`、`max-request-size=50MB`，并新增 `file.upload-dir=uploads`。
+- 创建 `FileUtil`：文件名净化（防目录遍历）、扩展名提取、白名单校验（`pdf/doc/docx/ppt/pptx/xls/xlsx/txt/zip/rar/7z/png/jpg/jpeg/gif/csv/md`）。
+- 创建 `FileStorageService` / `FileStorageServiceImpl`：
+  - 保存到本地 `uploads/{subDirectory}/`，文件名使用 `UUID + 原始扩展名`。
+  - 上传前校验文件大小不超过 `spring.servlet.multipart.max-file-size`。
+  - 返回可访问 URL `/files/{subDirectory}/{storedName}`。
+- 创建 `FileAccessService` / `FileAccessServiceImpl`：根据 `file_url` 反查所属课程（作业附件 → 作业；提交附件 → 提交 → 作业；课程资料 → 课程），并校验访问者课程成员身份。
+- 创建 `FileController`：`GET /files/{*filePath}` 下载文件，按扩展名返回 `Content-Type`，下载前执行课程成员鉴权。
+- 课程资料模块（M9 提前部分实现，因 M7 依赖）：
+  - 创建 `CourseMaterial` 实体、`CourseMaterialMapper` / XML、`UploadMaterialRequestDTO`、`CourseMaterialVO`。
+  - 创建 `CourseMaterialService` / `Impl`、`CourseMaterialController`：`POST/GET/DELETE /courses/{courseId}/materials`。
+- 改造 M5 作业文件占位端点为真实 multipart 上传（`POST /courses/{courseId}/assignments/{assignmentId}/files`），删除 `CreateAssignmentFileRequestDTO`。
+- 新增提交文件上传端点：`POST /courses/{courseId}/assignments/{assignmentId}/submissions/{submissionId}/files`（仅限提交者本人）。
+- `GlobalExceptionHandler` 新增 `MaxUploadSizeExceededException` 处理，返回 400。
+- `.gitignore` 增加 `uploads/` 忽略。
+
+### 实现细节
+- 文件存储目录通过 `file.upload-dir` 配置，默认项目根下 `uploads/`。
+- 下载 URL 采用 `/files/{subDirectory}/{uuid}.{ext}`；`FileController` 使用 `{*filePath}` 通配多级路径。
+- 授权检查顺序：先反查所属课程 → 再校验课程成员身份（ADMIN 放行）→ 最后流式返回文件字节。
+- 上传大小在 Service 层二次校验（MockMvc 不触发容器层 multipart 限制，因此在 Service 层强制校验保证行为一致）。
+
+### 新增 / 修改 / 删除的文件
+- **新增**:
+  - `src/main/java/com/example/gradescopespringboot/common/util/FileUtil.java`
+  - `src/main/java/com/example/gradescopespringboot/service/FileStorageService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/FileStorageServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/service/FileAccessService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/FileAccessServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/FileController.java`
+  - `src/main/java/com/example/gradescopespringboot/entity/CourseMaterial.java`
+  - `src/main/java/com/example/gradescopespringboot/mapper/CourseMaterialMapper.java`
+  - `src/main/resources/mapper/CourseMaterialMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/dto/material/UploadMaterialRequestDTO.java`
+  - `src/main/java/com/example/gradescopespringboot/vo/material/CourseMaterialVO.java`
+  - `src/main/java/com/example/gradescopespringboot/service/CourseMaterialService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/CourseMaterialServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/CourseMaterialController.java`
+  - `src/test/java/com/example/gradescopespringboot/FileStorageIntegrationTest.java`
+- **修改**:
+  - `src/main/resources/application.properties`
+  - `src/main/java/com/example/gradescopespringboot/common/exception/GlobalExceptionHandler.java`
+  - `src/main/java/com/example/gradescopespringboot/service/AssignmentService.java`（`addAssignmentFile` 改为 multipart）
+  - `src/main/java/com/example/gradescopespringboot/service/impl/AssignmentServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/AssignmentController.java`
+  - `src/main/java/com/example/gradescopespringboot/service/SubmissionService.java`（新增 `addSubmissionFile`）
+  - `src/main/java/com/example/gradescopespringboot/service/impl/SubmissionServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/SubmissionController.java`
+  - `src/main/java/com/example/gradescopespringboot/mapper/AssignmentFileMapper.java`（`selectByFileUrl`）
+  - `src/main/resources/mapper/AssignmentFileMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/mapper/SubmissionFileMapper.java`（`selectByFileUrl`）
+  - `src/main/resources/mapper/SubmissionFileMapper.xml`
+  - `src/test/java/com/example/gradescopespringboot/AssignmentControllerIntegrationTest.java`（文件上传测试改为 multipart）
+  - `.gitignore`
+  - `MILESTONES.md`
+  - `CHANGELOG.md`
+- **删除**:
+  - `src/main/java/com/example/gradescopespringboot/dto/assignment/CreateAssignmentFileRequestDTO.java`
+
+### 执行的测试
+- `mvn clean test`：**47 个测试全部通过**。
+  - `AdminControllerIntegrationTest`（6）
+  - `AssignmentControllerIntegrationTest`（8）
+  - `CourseControllerIntegrationTest`（7）
+  - `FileStorageIntegrationTest`（6）
+  - `GlobalExceptionHandlerTest`（5）
+  - `GradescopeSpringBootApplicationTests`（1）
+  - `RbacIntegrationTest`（4）
+  - `CustomUserDetailsServiceTest`（1）
+  - `SubmissionControllerIntegrationTest`（8）
+  - `UserMapperTest`（1）
+- `FileStorageIntegrationTest` 覆盖：课程资料上传/列表、提交文件上传、成员下载、非成员下载 403、`.exe` 拒绝、超大文件 400。
+
+### 已知问题 / 限制
+- 文件存储在本地磁盘 `uploads/`，未接入云存储；生产环境应改为对象存储并配置 CDN。
+- `assignment_files` / `submission_files` 表暂无 `is_deleted` 列，删除文件为物理删除；后续可统一加软删除。
+- `FileAccessService` 反查课程依赖 `file_url` 唯一性（UUID 保证实际唯一）。
+
+### 回滚指令
+```bash
+git revert HEAD
+```
+
+---
+
 > **如何更新本文档**: 每次推送到远程仓库后，在日志顶部（本行下方）按既定格式追加新记录。更新页眉中的"最后更新"日期。关联 `MILESTONES.md` 中的相关里程碑并更新其状态。

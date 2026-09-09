@@ -1,7 +1,6 @@
 package com.example.gradescopespringboot.controller;
 
 import com.example.gradescopespringboot.common.result.Result;
-import com.example.gradescopespringboot.dto.assignment.CreateAssignmentFileRequestDTO;
 import com.example.gradescopespringboot.dto.assignment.CreateAssignmentRequestDTO;
 import com.example.gradescopespringboot.dto.assignment.UpdateAssignmentRequestDTO;
 import com.example.gradescopespringboot.security.model.LoginUser;
@@ -12,6 +11,7 @@ import com.example.gradescopespringboot.vo.assignment.AssignmentVO;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -97,11 +97,11 @@ public class AssignmentController {
     @PostMapping("/{assignmentId}/files")
     public Result<AssignmentFileVO> addAssignmentFile(@PathVariable Long courseId,
                                                        @PathVariable Long assignmentId,
-                                                       @Valid @RequestBody CreateAssignmentFileRequestDTO dto,
+                                                       @RequestParam("file") MultipartFile file,
                                                        Authentication authentication) {
         LoginUser loginUser = (LoginUser) authentication.getPrincipal();
         List<String> roles = extractRoles(authentication);
-        return Result.success(assignmentService.addAssignmentFile(courseId, assignmentId, dto,
+        return Result.success(assignmentService.addAssignmentFile(courseId, assignmentId, file,
                 loginUser.getUserId(), roles));
     }
 

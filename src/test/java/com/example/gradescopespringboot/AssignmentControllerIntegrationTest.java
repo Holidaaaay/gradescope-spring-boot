@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -261,7 +262,7 @@ class AssignmentControllerIntegrationTest {
     }
 
     @Test
-    void addAndListAssignmentFilePlaceholder() throws Exception {
+    void addAndListAssignmentFile() throws Exception {
         AuthInfo instructor = login("bob");
         String code = "FILE" + System.currentTimeMillis();
         Long courseId = createCourse(instructor.token(), code, "2026 Spring");
@@ -269,10 +270,12 @@ class AssignmentControllerIntegrationTest {
         Long assignmentId = createAssignment(instructor.token(), courseId, title,
                 LocalDateTime.of(2026, 12, 31, 23, 59, 59));
 
-        mockMvc.perform(post("/courses/" + courseId + "/assignments/" + assignmentId + "/files")
-                        .header("Authorization", "Bearer " + instructor.token())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"fileName\":\"hw.pdf\",\"fileUrl\":\"/uploads/hw.pdf\",\"fileSize\":1024,\"fileType\":\"pdf\"}"))
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "hw.pdf", "application/pdf", "dummy pdf content".getBytes());
+
+        mockMvc.perform(multipart("/courses/" + courseId + "/assignments/" + assignmentId + "/files")
+                        .file(file)
+                        .header("Authorization", "Bearer " + instructor.token()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.fileName").value("hw.pdf"));

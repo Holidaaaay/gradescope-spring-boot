@@ -19,6 +19,20 @@
         WHERE id = #{id}
     </select>
 
+    <select id="selectByFileUrl" resultType="com.example.gradescopespringboot.entity.AssignmentFile">
+        SELECT
+            id,
+            assignment_id,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            uploaded_by,
+            created_at
+        FROM assignment_files
+        WHERE file_url = #{fileUrl}
+    </select>
+
     <select id="selectByAssignmentId" resultType="com.example.gradescopespringboot.entity.AssignmentFile">
         SELECT
             id,

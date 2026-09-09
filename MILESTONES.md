@@ -399,56 +399,57 @@
 
 ## 里程碑 7：文件上传与存储
 
-**状态**: `[ ]` **未开始**  
+**状态**: `[x]` **已完成**  
 **依赖**: 里程碑 6  
-**预估工作量**: 中（2 个会话）
+**预估工作量**: 中（2 个会话）  
+**完成日期**: 2026-08-19
 
 ### 目标
 支持作业附件、提交文件和课程资料的多部分文件上传。
 
 ### 子任务
-1. [ ] **在 `application.properties` 中配置多部分上传**:
-   - `spring.servlet.multipart.max-file-size=10MB`
-   - `spring.servlet.multipart.max-request-size=50MB`
-2. [ ] **创建 `FileStorageService`**:
-   - `storeFile(MultipartFile, String subDirectory)`: 保存到本地文件系统 `/uploads/{subDirectory}/` 下。
-   - 生成唯一文件名（UUID + 原始扩展名）。
-   - 返回可访问的 URL 路径。
-3. [ ] **创建 `FileDownloadController`**:
-   - `GET /files/{filename}`: 以正确 `Content-Type` 提供文件。
-   - 提供文件前进行角色检查（校验用户是否有权访问与该文件关联的课程）。
-4. [ ] **实现作业文件上传**（`POST /courses/{courseId}/assignments/{assignmentId}/files`）。
-5. [ ] **实现提交文件上传**（`POST /courses/{courseId}/assignments/{assignmentId}/submissions/{submissionId}/files`）。
-6. [ ] **实现课程资料上传**（`POST /courses/{courseId}/materials`）。
-7. [ ] **文件类型白名单**: 拒绝非允许扩展名。
-8. [ ] **创建 `FileUtil`**: 提取扩展名、校验 MIME 类型。
+1. [x] **在 `application.properties` 中配置多部分上传**:
+   - [x] `spring.servlet.multipart.max-file-size=10MB`
+   - [x] `spring.servlet.multipart.max-request-size=50MB`
+2. [x] **创建 `FileStorageService`**:
+   - [x] `storeFile(MultipartFile, String subDirectory)`: 保存到本地文件系统 `uploads/{subDirectory}/` 下。
+   - [x] 生成唯一文件名（UUID + 原始扩展名）。
+   - [x] 返回可访问的 URL 路径 `/files/{subDirectory}/{storedName}`。
+3. [x] **创建 `FileController`（下载）**:
+   - [x] `GET /files/{*filePath}`: 以正确 `Content-Type` 提供文件。
+   - [x] 提供文件前通过 `FileAccessService` 解析所属课程并校验成员身份。
+4. [x] **实现作业文件上传**（`POST /courses/{courseId}/assignments/{assignmentId}/files`，multipart）。
+5. [x] **实现提交文件上传**（`POST /courses/{courseId}/assignments/{assignmentId}/submissions/{submissionId}/files`，multipart，仅限提交者）。
+6. [x] **实现课程资料上传**（`POST /courses/{courseId}/materials`，multipart，仅教师/助教/管理员）。
+7. [x] **文件类型白名单**: 拒绝非允许扩展名（`.exe` 等）。
+8. [x] **创建 `FileUtil`**: 提取扩展名、净化文件名、白名单校验。
 
 ### 验收标准
-- [ ] 教师可上传 PDF 到作业；文件出现在作业详情中。
-- [ ] 学生可上传 ZIP 作为提交。
-- [ ] 超出大小限制时返回 400 及明确提示。
-- [ ] 不允许的文件类型（例如 `.exe`）被拒绝。
-- [ ] 下载端点仅向课程成员提供文件。
-- [ ] 文件存储在 Web 根目录之外；无法通过静态路径直接访问。
+- [x] 教师可上传 PDF 到作业；文件出现在作业详情中。
+- [x] 学生可上传 ZIP 作为提交。
+- [x] 超出大小限制时返回 400 及明确提示。
+- [x] 不允许的文件类型（例如 `.exe`）被拒绝。
+- [x] 下载端点仅向课程成员提供文件。
+- [x] 文件存储在 Web 根目录之外；无法通过静态路径直接访问。
 
 ### 测试方法
-1. 使用 `MockMvc` + `MockMultipartFile` 进行集成测试:
-   - 上传有效文件 → 断言 200 且数据库记录已创建。
-   - 上传 `.exe` → 断言 400。
-   - 上传超大文件 → 断言 400。
-2. 手动测试：通过浏览器/curl 携带 JWT 下载文件。
+1. [x] 使用 `MockMvc` + `MockMultipartFile` 进行集成测试:
+   - [x] 上传有效文件 → 断言 200 且数据库记录已创建。
+   - [x] 上传 `.exe` → 断言 400。
+   - [x] 上传超大文件 → 断言 400。
+2. [x] 集成测试覆盖课程资料上传、作业附件上传、提交文件上传、成员下载、非成员下载拒绝。
 
 ### 代码审查清单
-- [ ] 文件名已净化（防止目录遍历如 `../../../etc/passwd`）。
-- [ ] 唯一文件名生成防止覆盖。
-- [ ] 文件类型检查使用白名单，**不是**黑名单。
-- [ ] 下载在流式传输字节前执行授权检查。
-- [ ] 数据库中准确记录 `file_size`。
+- [x] 文件名已净化（防止目录遍历如 `../../../etc/passwd`）。
+- [x] 唯一文件名生成防止覆盖。
+- [x] 文件类型检查使用白名单，**不是**黑名单。
+- [x] 下载在流式传输字节前执行授权检查。
+- [x] 数据库中准确记录 `file_size`。
 
 ### 推送条件
-- [ ] 三种上下文（作业、提交、资料）的上传/下载流程均已测试。
-- [ ] 未授权下载的安全测试通过。
-- [ ] `mvn clean test` 通过。
+- [x] 三种上下文（作业、提交、资料）的上传/下载流程均已测试。
+- [x] 未授权下载的安全测试通过。
+- [x] `mvn clean test` 通过。
 
 ---
 
@@ -886,7 +887,7 @@
 | 4 | 课程管理模块 | ✅ 已完成 | 2026-08-19 |
 | 5 | 作业管理模块 | ✅ 已完成 | 2026-08-19 |
 | 6 | 学生提交模块 | ✅ 已完成 | 2026-08-19 |
-| 7 | 文件上传与存储 | ⬜ 未开始 | — |
+| 7 | 文件上传与存储 | ✅ 已完成 | 2026-08-19 |
 | 8 | 评分与反馈模块 | ⬜ 未开始 | — |
 | 9 | 课程资料模块 | ⬜ 未开始 | — |
 | 10 | 分页、缓存与打磨 | ⬜ 未开始 | — |

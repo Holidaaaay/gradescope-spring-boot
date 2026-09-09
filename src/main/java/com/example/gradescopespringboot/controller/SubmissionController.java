@@ -5,10 +5,12 @@ import com.example.gradescopespringboot.dto.submission.CreateSubmissionRequestDT
 import com.example.gradescopespringboot.security.model.LoginUser;
 import com.example.gradescopespringboot.service.SubmissionService;
 import com.example.gradescopespringboot.vo.submission.SubmissionDetailVO;
+import com.example.gradescopespringboot.vo.submission.SubmissionFileVO;
 import com.example.gradescopespringboot.vo.submission.SubmissionVO;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -64,6 +66,18 @@ public class SubmissionController {
         List<String> roles = extractRoles(authentication);
         return Result.success(submissionService.getSubmissionDetail(courseId, assignmentId, submissionId,
                 loginUser.getUserId(), roles));
+    }
+
+    @PostMapping("/{submissionId}/files")
+    public Result<SubmissionFileVO> addSubmissionFile(@PathVariable Long courseId,
+                                                      @PathVariable Long assignmentId,
+                                                      @PathVariable Long submissionId,
+                                                      @RequestParam("file") MultipartFile file,
+                                                      Authentication authentication) {
+        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+        List<String> roles = extractRoles(authentication);
+        return Result.success(submissionService.addSubmissionFile(courseId, assignmentId, submissionId,
+                file, loginUser.getUserId(), roles));
     }
 
     private List<String> extractRoles(Authentication authentication) {

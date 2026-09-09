@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.stream.Collectors;
 
@@ -59,6 +60,15 @@ public class GlobalExceptionHandler {
     public Result<Void> handleIllegalArgument(IllegalArgumentException e) {
         log.warn("Illegal argument: {}", e.getMessage());
         return Result.fail(ResultCode.BAD_REQUEST.getCode(), e.getMessage());
+    }
+
+    /**
+     * 处理 multipart 上传大小超限
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Result<Void> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException e) {
+        log.warn("Uploaded file exceeds size limit");
+        return Result.fail(ResultCode.BAD_REQUEST.getCode(), "Uploaded file exceeds size limit");
     }
 
     /**
