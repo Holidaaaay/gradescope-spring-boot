@@ -70,6 +70,13 @@ public class AuthServiceImpl implements AuthService {
 
         userService.save(user);
 
+        Role studentRole = roleService.getByCode("STUDENT")
+                .orElseThrow(() -> new IllegalStateException("Default STUDENT role not found"));
+        UserRole userRole = new UserRole();
+        userRole.setUserId(user.getId());
+        userRole.setRoleId(studentRole.getId());
+        userRoleService.assignRole(userRole);
+
         return new RegisterResponseVO(user.getId(), user.getUsername());
     }
 

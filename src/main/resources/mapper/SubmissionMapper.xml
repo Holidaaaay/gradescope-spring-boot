@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gradescopespringboot.mapper.SubmissionMapper">
+
+    <select id="selectById" resultType="com.example.gradescopespringboot.entity.Submission">
+        SELECT
+            id,
+            assignment_id,
+            student_id,
+            submission_no,
+            content_text,
+            submitted_at,
+            is_late,
+            status,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM submissions
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </select>
+
+    <select id="selectByIdAndAssignmentId" resultType="com.example.gradescopespringboot.entity.Submission">
+        SELECT
+            id,
+            assignment_id,
+            student_id,
+            submission_no,
+            content_text,
+            submitted_at,
+            is_late,
+            status,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM submissions
+        WHERE id = #{id}
+          AND assignment_id = #{assignmentId}
+          AND is_deleted = 0
+    </select>
+
+    <select id="selectByAssignmentIdAndStudentId" resultType="com.example.gradescopespringboot.entity.Submission">
+        SELECT
+            id,
+            assignment_id,
+            student_id,
+            submission_no,
+            content_text,
+            submitted_at,
+            is_late,
+            status,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM submissions
+        WHERE assignment_id = #{assignmentId}
+          AND student_id = #{studentId}
+          AND is_deleted = 0
+        ORDER BY submission_no ASC
+    </select>
+
+    <select id="selectByAssignmentId" resultType="com.example.gradescopespringboot.entity.Submission">
+        SELECT
+            id,
+            assignment_id,
+            student_id,
+            submission_no,
+            content_text,
+            submitted_at,
+            is_late,
+            status,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM submissions
+        WHERE assignment_id = #{assignmentId}
+          AND is_deleted = 0
+        ORDER BY student_id ASC, submission_no ASC
+    </select>
+
+    <select id="countSubmittedByAssignmentAndStudent" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM submissions
+        WHERE assignment_id = #{assignmentId}
+          AND student_id = #{studentId}
+          AND status = 1
+          AND is_deleted = 0
+    </select>
+
+    <select id="selectMaxSubmissionNo" resultType="java.lang.Integer">
+        SELECT MAX(submission_no)
+        FROM submissions
+        WHERE assignment_id = #{assignmentId}
+          AND student_id = #{studentId}
+          AND is_deleted = 0
+    </select>
+
+    <select id="selectDraftByAssignmentAndStudent" resultType="com.example.gradescopespringboot.entity.Submission">
+        SELECT
+            id,
+            assignment_id,
+            student_id,
+            submission_no,
+            content_text,
+            submitted_at,
+            is_late,
+            status,
+            created_at,
+            updated_at,
+            is_deleted
+        FROM submissions
+        WHERE assignment_id = #{assignmentId}
+          AND student_id = #{studentId}
+          AND status = 0
+          AND is_deleted = 0
+    </select>
+
+    <insert id="insert"
+            parameterType="com.example.gradescopespringboot.entity.Submission"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO submissions (
+            assignment_id,
+            student_id,
+            submission_no,
+            content_text,
+            submitted_at,
+            is_late,
+            status
+        ) VALUES (
+            #{assignmentId},
+            #{studentId},
+            #{submissionNo},
+            #{contentText},
+            #{submittedAt},
+            #{isLate},
+            #{status}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.gradescopespringboot.entity.Submission">
+        UPDATE submissions
+        SET content_text = #{contentText},
+            submitted_at = #{submittedAt},
+            is_late = #{isLate},
+            status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <update id="updateDraft">
+        UPDATE submissions
+        SET content_text = #{contentText},
+            updated_at = NOW()
+        WHERE assignment_id = #{assignmentId}
+          AND student_id = #{studentId}
+          AND status = 0
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteById">
+        UPDATE submissions
+        SET is_deleted = 1
+        WHERE id = #{id}
+    </update>
+
+</mapper>

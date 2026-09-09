@@ -339,60 +339,61 @@
 
 ## 里程碑 6：学生提交模块
 
-**状态**: `[ ]` **未开始**  
+**状态**: `[x]` **已完成**  
 **依赖**: 里程碑 5  
-**预估工作量**: 中（2-3 个会话）
+**预估工作量**: 中（2-3 个会话）  
+**完成日期**: 2026-08-19
 
 ### 目标
 学生可提交作业响应，系统强制执行提交次数限制和迟交规则。
 
 ### 子任务
-1. [ ] **创建 `Submission` 实体**。
-2. [ ] **创建 `SubmissionFile` 实体**。
-3. [ ] **创建 Mapper**: `SubmissionMapper.xml`、`SubmissionFileMapper.xml`。
-4. [ ] **创建 DTO**: `CreateSubmissionRequestDTO`。
-5. [ ] **创建 VO**: `SubmissionVO`、`SubmissionDetailVO`。
-6. [ ] **创建 `SubmissionService` / `SubmissionServiceImpl`**:
-   - `createSubmission`: 仅限学生。
-     - 校验学生是否已加入课程。
-     - 检查 `max_submission_times`: 超限则拒绝。
-     - 检查 `due_time` 与 `allow_late_submission`: 不允许迟交时拒绝迟交。
-     - 按 (assignment_id, student_id) 自动递增 `submission_no`。
-     - 自动设置 `is_late`。
-   - `saveDraft`: 同上，但 `status = 0`。
-   - `listMySubmissions`: 针对特定作业。
-   - `getSubmissionDetail`: 学生看自己的；教师看课程内任何提交。
-7. [ ] **创建 `SubmissionController`**，路径为 `/courses/{courseId}/assignments/{assignmentId}/submissions`。
+1. [x] **创建 `Submission` 实体**。
+2. [x] **创建 `SubmissionFile` 实体**。
+3. [x] **创建 Mapper**: `SubmissionMapper.xml`、`SubmissionFileMapper.xml`。
+4. [x] **创建 DTO**: `CreateSubmissionRequestDTO`。
+5. [x] **创建 VO**: `SubmissionVO`、`SubmissionDetailVO`、`SubmissionFileVO`。
+6. [x] **创建 `SubmissionService` / `SubmissionServiceImpl`**:
+   - [x] `createSubmission`: 仅限学生。
+     - [x] 校验学生是否已加入课程。
+     - [x] 检查 `max_submission_times`: 超限则拒绝。
+     - [x] 检查 `due_time` 与 `allow_late_submission`: 不允许迟交时拒绝迟交。
+     - [x] 按 (assignment_id, student_id) 自动递增 `submission_no`。
+     - [x] 自动设置 `is_late`。
+   - [x] `saveDraft`: 保存草稿，不占用提交次数。
+   - [x] `listSubmissions`: 学生看自己的；教师看课程内全部。
+   - [x] `getSubmissionDetail`: 学生看自己的；教师看课程内任何提交。
+7. [x] **创建 `SubmissionController`**，路径为 `/courses/{courseId}/assignments/{assignmentId}/submissions`。
 
 ### 验收标准
-- [ ] 学生最多可提交 `max_submission_times` 次。
-- [ ] 第 4 次提交（若上限为 3）被拒绝并返回明确错误。
-- [ ] 截止后提交且 `allow_late_submission = 0` 时被拒绝。
-- [ ] 截止后提交且允许迟交时被接受，`is_late = 1`。
-- [ ] `submission_no` 正确递增：1、2、3。
-- [ ] 教师可查看某作业的所有提交。
-- [ ] 学生无法查看其他学生的提交。
+- [x] 学生最多可提交 `max_submission_times` 次。
+- [x] 第 4 次提交（若上限为 3）被拒绝并返回明确错误。
+- [x] 截止后提交且 `allow_late_submission = 0` 时被拒绝。
+- [x] 截止后提交且允许迟交时被接受，`is_late = 1`。
+- [x] `submission_no` 正确递增：1、2、3。
+- [x] 教师可查看某作业的所有提交。
+- [x] 学生无法查看其他学生的提交。
 
 ### 测试方法
-1. 集成测试:
-   - 提交 3 次 → 每次断言成功。
-   - 第 4 次提交 → 断言 409 或 400 及提示信息。
-   - 迟交标志为 false 时截止后提交 → 断言拒绝。
-   - 迟交标志为 true 时截止后提交 → 断言成功且 `is_late=1`。
-2. 安全测试:
-   - 未加入课程的用户提交 → 403。
-   - 学生查看同伴提交 → 403。
+1. [x] 集成测试:
+   - [x] 提交 3 次 → 每次断言成功。
+   - [x] 第 4 次提交 → 断言 409 及提示信息。
+   - [x] 迟交标志为 false 时截止后提交 → 断言拒绝。
+   - [x] 迟交标志为 true 时截止后提交 → 断言成功且 `is_late=true`。
+2. [x] 安全测试:
+   - [x] 未加入课程的用户提交 → 403。
+   - [x] 学生查看同伴提交 → 403。
 
 ### 代码审查清单
-- [ ] 提交次数检查是原子的（考虑竞态条件；使用数据库唯一约束作为安全网）。
-- [ ] `due_time` 与 `submitted_at` 的时区处理一致。
-- [ ] `is_late` 由业务层计算，不接受客户端传入。
-- [ ] `student_id` 来自 JWT，非请求体。
+- [x] 提交次数检查受数据库唯一约束 `(assignment_id, student_id, submission_no)` 保护，作为并发安全网。
+- [x] `due_time` 与 `submitted_at` 的时区处理一致（均使用 JVM 默认时区的 `LocalDateTime`）。
+- [x] `is_late` 由业务层计算，不接受客户端传入。
+- [x] `student_id` 来自 JWT，非请求体。
 
 ### 推送条件
-- [ ] 提交次数限制和迟交逻辑已充分测试。
-- [ ] 安全边界已验证。
-- [ ] `mvn clean test` 通过。
+- [x] 提交次数限制和迟交逻辑已充分测试。
+- [x] 安全边界已验证。
+- [x] `mvn clean test` 通过。
 
 ---
 
@@ -884,7 +885,7 @@
 | 3 | 管理员管理模块 | ✅ 已完成 | 2026-08-17 |
 | 4 | 课程管理模块 | ✅ 已完成 | 2026-08-19 |
 | 5 | 作业管理模块 | ✅ 已完成 | 2026-08-19 |
-| 6 | 学生提交模块 | ⬜ 未开始 | — |
+| 6 | 学生提交模块 | ✅ 已完成 | 2026-08-19 |
 | 7 | 文件上传与存储 | ⬜ 未开始 | — |
 | 8 | 评分与反馈模块 | ⬜ 未开始 | — |
 | 9 | 课程资料模块 | ⬜ 未开始 | — |

@@ -741,7 +741,7 @@ git revert HEAD
 
 - **日期**: 2026-08-19
 - **分支**: `main`
-- **提交范围**: （待提交后填写）
+- **提交范围**: `cfcab70..d079e2c`
 - **里程碑**: [里程碑 4：课程管理模块](MILESTONES.md#里程碑-4课程管理模块)、[里程碑 5：作业管理模块](MILESTONES.md#里程碑-5作业管理模块)
 
 ### 实现了什么
@@ -826,6 +826,78 @@ git revert HEAD
 - 作业文件上传端点当前仅保存元数据（`file_url` 由调用方提供），实际 Multipart 文件上传、本地存储、白名单校验将在里程碑 7 中实现。
 - 作业列表尚未分页，将在里程碑 10 中统一引入 PageHelper。
 - `localStorage` JWT 存储仍是临时方案，后续里程碑中需升级为更安全的存储方案。
+
+### 回滚指令
+```bash
+git revert HEAD
+```
+
+---
+
+## 推送 #11 —— 后端学生提交模块
+
+- **日期**: 2026-08-19
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [里程碑 6：学生提交模块](MILESTONES.md#里程碑-6学生提交模块)
+
+### 实现了什么
+- 创建 `Submission`、`SubmissionFile` 实体，对应 `submissions`、`submission_files` 表。
+- 创建 `SubmissionMapper` / `SubmissionFileMapper` 及 XML；`submissions` 查询均检查 `is_deleted = 0`。
+- 创建 `CreateSubmissionRequestDTO`、`SubmissionVO`、`SubmissionDetailVO`、`SubmissionFileVO`。
+- 创建 `SubmissionService` / `SubmissionServiceImpl`：
+  - `createSubmission`：仅限 `STUDENT` 角色且已加入课程的学生。
+    - 检查作业是否已发布。
+    - 检查已提交次数是否达到 `max_submission_times`，超限返回 409。
+    - 根据当前时间与 `due_time` 计算 `is_late`；不允许迟交时拒绝迟交。
+    - 自动递增 `submission_no`（基于历史最大值 + 1）。
+  - `saveDraft`：保存草稿，不占用提交次数，支持更新已有草稿。
+  - `listSubmissions`：教师/助教/管理员查看全部；学生仅看自己。
+  - `getSubmissionDetail`：同上权限控制，返回带文件列表（当前为空，M7 填充）。
+- 创建 `SubmissionController`，路径为 `/courses/{courseId}/assignments/{assignmentId}/submissions`。
+- 修复注册流程：新注册用户自动分配默认 `STUDENT` 角色（`AuthServiceImpl.register`），解决此前新用户无角色无法提交的问题。
+
+### 实现细节
+- `is_late` 由服务端根据 `LocalDateTime.now()` 与作业 `due_time` 比较后计算，不接收客户端传入。
+- 提交次数统计仅计算 `status = 1` 的正式提交，草稿不计入。
+- 利用数据库唯一约束 `(assignment_id, student_id, submission_no)` 作为并发安全网。
+- `student_id` 从 JWT 的 `LoginUser.getUserId()` 获取。
+
+### 新增 / 修改 / 删除的文件
+- **新增**:
+  - `src/main/java/com/example/gradescopespringboot/entity/Submission.java`
+  - `src/main/java/com/example/gradescopespringboot/entity/SubmissionFile.java`
+  - `src/main/java/com/example/gradescopespringboot/mapper/SubmissionMapper.java`
+  - `src/main/resources/mapper/SubmissionMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/mapper/SubmissionFileMapper.java`
+  - `src/main/resources/mapper/SubmissionFileMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/service/SubmissionService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/SubmissionServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/SubmissionController.java`
+  - `src/main/java/com/example/gradescopespringboot/dto/submission/CreateSubmissionRequestDTO.java`
+  - `src/main/java/com/example/gradescopespringboot/vo/submission/*`
+  - `src/test/java/com/example/gradescopespringboot/SubmissionControllerIntegrationTest.java`
+- **修改**:
+  - `src/main/java/com/example/gradescopespringboot/service/impl/AuthServiceImpl.java`（注册时自动分配 STUDENT 角色）
+  - `MILESTONES.md`（M6 标记完成）
+  - `CHANGELOG.md`（本记录）
+- **删除**: （无）
+
+### 执行的测试
+- `mvn clean test`：41 个测试全部通过。
+  - `GlobalExceptionHandlerTest`（5）
+  - `GradescopeSpringBootApplicationTests`（1）
+  - `UserMapperTest`（1）
+  - `RbacIntegrationTest`（4）
+  - `CustomUserDetailsServiceTest`（1）
+  - `AdminControllerIntegrationTest`（6）
+  - `CourseControllerIntegrationTest`（7）
+  - `AssignmentControllerIntegrationTest`（8）
+  - `SubmissionControllerIntegrationTest`（8）
+
+### 已知问题 / 限制
+- 提交文件附件仅预留 `SubmissionFile` 实体与 Mapper，实际上传逻辑在里程碑 7 中实现。
+- 提交次数检查非原子；并发场景依赖数据库唯一约束进行兜底。
 
 ### 回滚指令
 ```bash

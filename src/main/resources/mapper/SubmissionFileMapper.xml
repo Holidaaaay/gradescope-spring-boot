@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gradescopespringboot.mapper.SubmissionFileMapper">
+
+    <select id="selectById" resultType="com.example.gradescopespringboot.entity.SubmissionFile">
+        SELECT
+            id,
+            submission_id,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            created_at
+        FROM submission_files
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectBySubmissionId" resultType="com.example.gradescopespringboot.entity.SubmissionFile">
+        SELECT
+            id,
+            submission_id,
+            file_name,
+            file_url,
+            file_size,
+            file_type,
+            created_at
+        FROM submission_files
+        WHERE submission_id = #{submissionId}
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert"
+            parameterType="com.example.gradescopespringboot.entity.SubmissionFile"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO submission_files (
+            submission_id,
+            file_name,
+            file_url,
+            file_size,
+            file_type
+        ) VALUES (
+            #{submissionId},
+            #{fileName},
+            #{fileUrl},
+            #{fileSize},
+            #{fileType}
+        )
+    </insert>
+
+</mapper>
