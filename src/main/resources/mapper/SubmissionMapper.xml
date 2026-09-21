@@ -162,6 +162,14 @@
           AND is_deleted = 0
     </update>
 
+    <update id="updateStatusById">
+        UPDATE submissions
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
     <update id="deleteById">
         UPDATE submissions
         SET is_deleted = 1

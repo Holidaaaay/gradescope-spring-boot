@@ -37,5 +37,7 @@ public interface SubmissionMapper {
                     @Param("studentId") Long studentId,
                     @Param("contentText") String contentText);
 
+    int updateStatusById(@Param("id") Long id, @Param("status") Integer status);
+
     int deleteById(Long id);
 }

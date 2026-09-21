@@ -1,6 +1,6 @@
 # 变更日志 / 推送记录
 
-> **状态**: 动态文档 | **最后更新**: 2026-08-19  
+> **状态**: 动态文档 | **最后更新**: 2026-09-21  
 > **用途**: 按时间顺序记录每次推送到远程仓库的操作。每条记录 documenting 实现了什么、如何实现的、关键设计决策，以及任何已知问题或回滚指令。用于追踪进度、调试回归问题、理解历史上下文。
 
 ---
@@ -991,6 +991,79 @@ git revert HEAD
 - 文件存储在本地磁盘 `uploads/`，未接入云存储；生产环境应改为对象存储并配置 CDN。
 - `assignment_files` / `submission_files` 表暂无 `is_deleted` 列，删除文件为物理删除；后续可统一加软删除。
 - `FileAccessService` 反查课程依赖 `file_url` 唯一性（UUID 保证实际唯一）。
+
+### 回滚指令
+```bash
+git revert HEAD
+```
+
+---
+
+## 推送 #13 —— 后端评分与反馈模块
+
+- **日期**: 2026-09-21
+- **分支**: `main`
+- **提交范围**: （待提交后填写）
+- **里程碑**: [里程碑 8：评分与反馈模块](MILESTONES.md#里程碑-8评分与反馈模块)
+
+### 实现了什么
+- 创建 `Grade` 实体，对应 `grades` 表（`score DECIMAL(6,2)`、`comment`、`graded_at`、`status` 0草稿/1最终）。
+- 创建 `GradeMapper` / `GradeMapper.xml`：按提交查询评分、插入、更新、按作业查询最终分数列表、SQL 聚合统计（COUNT/AVG/MAX/MIN）。
+- 创建 `CreateGradeRequestDTO`（`@NotNull` + `@DecimalMin(0.0)` 分数校验，可选 `status`）与 `UpdateGradeRequestDTO`（含 `regrade` 重新评分标志）。
+- 创建 `GradeVO`、`GradeWithSubmissionVO`（评分 + 提交摘要）、`GradeStatisticsVO`。
+- 创建 `GradeService` / `GradeServiceImpl`：
+  - `createGrade`：仅课程 `INSTRUCTOR` / `TA` 或 `ADMIN`；校验提交属于该课程作业、非草稿提交；重复评分返回 409（数据库唯一键 `uk_grades_submission_id` 兜底）；分数不得超过作业 `total_score`；`scorer_id` 取自 JWT；最终评分时同事务更新 `submissions.status = 3`。
+  - `updateGrade`：仅草稿评分可直接修改；最终评分必须带 `regrade=true`；可将草稿定为最终并同步提交状态。
+  - `getGradeBySubmission`：学生仅可查看自己的**最终**评分（草稿评分对学生返回 404，防止泄露）；教师/助教/管理员可查看任意。
+  - `getGradeStatistics`：平均分/中位数/最高分/最低分/已评份数（AVG/MAX/MIN/COUNT 走 SQL 聚合，中位数由有序分数列表在业务层计算）。
+- 创建 `GradeController`，路径 `/courses/{courseId}/assignments/{assignmentId}`：
+  - `POST /submissions/{submissionId}/grade`
+  - `PUT /submissions/{submissionId}/grade`
+  - `GET /submissions/{submissionId}/grade`
+  - `GET /grades/statistics`
+- `SubmissionMapper` 新增 `updateStatusById`，供评分后同步提交状态。
+
+### 实现细节
+- 评分创建与状态更新均在 `@Transactional` 中完成，保证 `grades` 记录与 `submissions.status` 原子一致。
+- 评分权限同时依赖全局角色（`ADMIN`）与课程内角色（`course_members.course_role = INSTRUCTOR/TA`），复用 M6 的成员校验模式。
+- 业务错误统一抛 `BusinessException`（409 重复评分 / 400 超分或草稿评分 / 403 越权 / 404 不存在），由 `GlobalExceptionHandler` 封装为 `Result`。
+
+### 新增 / 修改 / 删除的文件
+- **新增**:
+  - `src/main/java/com/example/gradescopespringboot/entity/Grade.java`
+  - `src/main/java/com/example/gradescopespringboot/mapper/GradeMapper.java`
+  - `src/main/resources/mapper/GradeMapper.xml`
+  - `src/main/java/com/example/gradescopespringboot/dto/grade/CreateGradeRequestDTO.java`
+  - `src/main/java/com/example/gradescopespringboot/dto/grade/UpdateGradeRequestDTO.java`
+  - `src/main/java/com/example/gradescopespringboot/vo/grade/GradeVO.java`
+  - `src/main/java/com/example/gradescopespringboot/vo/grade/GradeWithSubmissionVO.java`
+  - `src/main/java/com/example/gradescopespringboot/vo/grade/GradeStatisticsVO.java`
+  - `src/main/java/com/example/gradescopespringboot/service/GradeService.java`
+  - `src/main/java/com/example/gradescopespringboot/service/impl/GradeServiceImpl.java`
+  - `src/main/java/com/example/gradescopespringboot/controller/GradeController.java`
+  - `src/test/java/com/example/gradescopespringboot/GradeControllerIntegrationTest.java`
+- **修改**:
+  - `src/main/java/com/example/gradescopespringboot/mapper/SubmissionMapper.java`（新增 `updateStatusById`）
+  - `src/main/resources/mapper/SubmissionMapper.xml`
+  - `MILESTONES.md`（M8 标记完成）
+  - `CHANGELOG.md`（本记录）
+- **删除**: （无）
+
+### 执行的测试
+- `mvn clean test`：**54 个测试全部通过**（新增 `GradeControllerIntegrationTest` 7 个，总计 54）。
+  - 教师评分 → 200，提交状态变为 3。
+  - 重复评分 → 409。
+  - 分数超过 total_score → 400。
+  - 学生评分 → 403。
+  - 学生查看自己成绩 → 200；查看同伴成绩 → 403。
+  - 草稿评分对学生不可见（404），定稿后可见；最终评分无 `regrade` 标志修改 → 409，带标志 → 200。
+  - 统计：2 份 80/90 分 → 平均 85、中位 85、最高 90、最低 80；学生访问统计 → 403。
+- 环境说明：本次测试依赖本地 MySQL（Docker 容器 `gradescope`，MySQL 9.4，`gradescope_db`），测试前需启动 Docker Desktop。
+
+### 已知问题 / 限制
+- 评分无删除/撤销端点（与里程碑范围一致，如需可在后续版本补充）。
+- 中位数在业务层计算（作业分数量级小，开销可忽略）；其余聚合走 SQL。
+- 草稿评分对教师可见、对学生返回 404（语义为"未发布"），与 F4 前端"未发布前学生看不到"一致。
 
 ### 回滚指令
 ```bash

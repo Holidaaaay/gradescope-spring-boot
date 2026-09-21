@@ -1,6 +1,6 @@
 # 项目里程碑与任务拆解
 
-> **状态**: 动态文档 | **最后更新**: 2026-08-19  
+> **状态**: 动态文档 | **最后更新**: 2026-09-21  
 > **用途**: 本文档将整个项目拆分为可验证的里程碑。每个里程碑包含子任务、明确的验收标准、测试说明和代码审查清单。**在完成当前里程碑的所有验收标准、测试、审查并推送到远程仓库之前，禁止进入下一个里程碑。**
 
 ---
@@ -455,53 +455,54 @@
 
 ## 里程碑 8：评分与反馈模块
 
-**状态**: `[ ]` **未开始**  
+**状态**: `[x]` **已完成**  
 **依赖**: 里程碑 7  
-**预估工作量**: 中（2 个会话）
+**预估工作量**: 中（2 个会话）  
+**完成日期**: 2026-09-21
 
 ### 目标
 教师和助教可为提交打分，学生可查看成绩。
 
 ### 子任务
-1. [ ] **创建 `Grade` 实体**。
-2. [ ] **创建 Mapper**: `GradeMapper.xml`。
-3. [ ] **创建 DTO**: `CreateGradeRequestDTO`、`UpdateGradeRequestDTO`。
-4. [ ] **创建 VO**: `GradeVO`、`GradeWithSubmissionVO`。
-5. [ ] **创建 `GradeService` / `GradeServiceImpl`**:
-   - `createGrade`: 仅限助教/教师。检查提交是否属于其课程。
-   - `updateGrade`: 仅当状态为草稿，或带有重新评分标志时。
-   - `getGradeBySubmission`: 学生看自己的；教师看任何。
-   - `getGradeStatistics`: 每作业的平均分、中位数、最高分、最低分（仅教师）。
-6. [ ] **创建 `GradeController`**，路径为 `/courses/{courseId}/assignments/{assignmentId}/submissions/{submissionId}/grade`。
-7. [ ] **提交状态更新**: 评分时更新 `submissions.status` 为 3（已评分）。
+1. [x] **创建 `Grade` 实体**。
+2. [x] **创建 Mapper**: `GradeMapper.xml`。
+3. [x] **创建 DTO**: `CreateGradeRequestDTO`、`UpdateGradeRequestDTO`。
+4. [x] **创建 VO**: `GradeVO`、`GradeWithSubmissionVO`。
+5. [x] **创建 `GradeService` / `GradeServiceImpl`**:
+   - [x] `createGrade`: 仅限助教/教师。检查提交是否属于其课程。
+   - [x] `updateGrade`: 仅当状态为草稿，或带有重新评分标志时。
+   - [x] `getGradeBySubmission`: 学生看自己的（仅最终评分）；教师看任何。
+   - [x] `getGradeStatistics`: 每作业的平均分、中位数、最高分、最低分（仅教师）。
+6. [x] **创建 `GradeController`**，路径为 `/courses/{courseId}/assignments/{assignmentId}/submissions/{submissionId}/grade`。
+7. [x] **提交状态更新**: 评分时更新 `submissions.status` 为 3（已评分）。
 
 ### 验收标准
-- [ ] 助教可为提交创建评分。
-- [ ] 同一提交的重复评分被阻止（数据库唯一约束 + 业务检查）。
-- [ ] 分数不可超过作业的 `total_score`。
-- [ ] 学生可查看自己的评分。
-- [ ] 学生无法查看其他学生的评分。
-- [ ] 评分统计准确。
+- [x] 助教可为提交创建评分。
+- [x] 同一提交的重复评分被阻止（数据库唯一约束 + 业务检查）。
+- [x] 分数不可超过作业的 `total_score`。
+- [x] 学生可查看自己的评分。
+- [x] 学生无法查看其他学生的评分。
+- [x] 评分统计准确。
 
 ### 测试方法
-1. 集成测试:
-   - 为提交评分 → 断言 `grades` 和 `submissions.status = 3` 的数据库记录。
-   - 再次为同一提交评分 → 断言 409。
-   - 分数 > total_score → 断言 400。
-2. 安全测试:
-   - 学生尝试评分 → 403。
-   - 学生查看同伴评分 → 403。
+1. [x] 集成测试:
+   - [x] 为提交评分 → 断言 `grades` 和 `submissions.status = 3` 的数据库记录。
+   - [x] 再次为同一提交评分 → 断言 409。
+   - [x] 分数 > total_score → 断言 400。
+2. [x] 安全测试:
+   - [x] 学生尝试评分 → 403。
+   - [x] 学生查看同伴评分 → 403。
 
 ### 代码审查清单
-- [ ] 评分创建与提交状态更新使用 `@Transactional`。
-- [ ] `scorer_id` 来自 JWT，非请求体。
-- [ ] 分数校验在业务层执行。
-- [ ] 统计查询高效（使用 SQL 聚合函数）。
+- [x] 评分创建与提交状态更新使用 `@Transactional`。
+- [x] `scorer_id` 来自 JWT，非请求体。
+- [x] 分数校验在业务层执行。
+- [x] 统计查询高效（使用 SQL 聚合函数）。
 
 ### 推送条件
-- [ ] 评分增删改查和统计已测试。
-- [ ] 角色边界已验证。
-- [ ] `mvn clean test` 通过。
+- [x] 评分增删改查和统计已测试。
+- [x] 角色边界已验证。
+- [x] `mvn clean test` 通过。
 
 ---
 
@@ -888,7 +889,7 @@
 | 5 | 作业管理模块 | ✅ 已完成 | 2026-08-19 |
 | 6 | 学生提交模块 | ✅ 已完成 | 2026-08-19 |
 | 7 | 文件上传与存储 | ✅ 已完成 | 2026-08-19 |
-| 8 | 评分与反馈模块 | ⬜ 未开始 | — |
+| 8 | 评分与反馈模块 | ✅ 已完成 | 2026-09-21 |
 | 9 | 课程资料模块 | ⬜ 未开始 | — |
 | 10 | 分页、缓存与打磨 | ⬜ 未开始 | — |
 | F1 | 前端项目搭建与认证页面 | ✅ 已完成 | 2026-08-17 |

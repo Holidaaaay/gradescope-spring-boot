@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gradescopespringboot.mapper.GradeMapper">
+
+    <select id="selectById" resultType="com.example.gradescopespringboot.entity.Grade">
+        SELECT
+            id,
+            submission_id,
+            scorer_id,
+            score,
+            comment,
+            graded_at,
+            status,
+            created_at,
+            updated_at
+        FROM grades
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectBySubmissionId" resultType="com.example.gradescopespringboot.entity.Grade">
+        SELECT
+            id,
+            submission_id,
+            scorer_id,
+            score,
+            comment,
+            graded_at,
+            status,
+            created_at,
+            updated_at
+        FROM grades
+        WHERE submission_id = #{submissionId}
+    </select>
+
+    <insert id="insert"
+            parameterType="com.example.gradescopespringboot.entity.Grade"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO grades (
+            submission_id,
+            scorer_id,
+            score,
+            comment,
+            graded_at,
+            status
+        ) VALUES (
+            #{submissionId},
+            #{scorerId},
+            #{score},
+            #{comment},
+            #{gradedAt},
+            #{status}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.gradescopespringboot.entity.Grade">
+        UPDATE grades
+        SET score = #{score},
+            comment = #{comment},
+            graded_at = #{gradedAt},
+            status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectFinalScoresByAssignmentId" resultType="java.math.BigDecimal">
+        SELECT g.score
+        FROM grades g
+        JOIN submissions s ON g.submission_id = s.id
+        WHERE s.assignment_id = #{assignmentId}
+          AND s.is_deleted = 0
+          AND g.status = 1
+        ORDER BY g.score ASC
+    </select>
+
+    <select id="selectStatistics" resultType="com.example.gradescopespringboot.vo.grade.GradeStatisticsVO">
+        SELECT
+            #{assignmentId} AS assignmentId,
+            COUNT(*) AS gradedCount,
+            ROUND(AVG(g.score), 2) AS averageScore,
+            MAX(g.score) AS maxScore,
+            MIN(g.score) AS minScore
+        FROM grades g
+        JOIN submissions s ON g.submission_id = s.id
+        WHERE s.assignment_id = #{assignmentId}
+          AND s.is_deleted = 0
+          AND g.status = 1
+    </select>
+
+</mapper>
